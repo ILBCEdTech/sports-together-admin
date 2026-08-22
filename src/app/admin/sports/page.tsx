@@ -1,10 +1,5 @@
-import { AdminSection } from "@/components/admin/admin-section";
+import { SportsManager } from "./_components/sports-manager";
+
 export default function Page() {
-  return (
-    <AdminSection
-      title="Sports"
-      description="Configure the tournament sports."
-      items={["Football", "Volleyball", "Basketball", "Badminton", "Swimming"]}
-    />
-  );
+  return <SportsManager />;
 }

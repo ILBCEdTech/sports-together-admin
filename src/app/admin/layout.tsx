@@ -1,7 +1,18 @@
 import Image from "next/image";
 import Link from "next/link";
 
-import { CalendarDays, FileUp, LayoutDashboard, Medal, Trophy, UserRound, UsersRound } from "lucide-react";
+import {
+  CalendarDays,
+  CalendarRange,
+  FileUp,
+  LayoutDashboard,
+  MapPin,
+  Medal,
+  ShieldCheck,
+  Trophy,
+  UserRound,
+  UsersRound,
+} from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import logo from "../../../logo.png";
@@ -9,9 +20,12 @@ import logo from "../../../logo.png";
 const links = [
   ["Dashboard", "/admin/dashboard", LayoutDashboard],
   ["Sports", "/admin/sports", Trophy],
+  ["Tournaments", "/admin/tournaments", CalendarRange],
   ["Teams", "/admin/teams", UsersRound],
   ["Players", "/admin/players", UserRound],
   ["Fixtures", "/admin/fixtures", CalendarDays],
+  ["Venues", "/admin/venues", MapPin],
+  ["Officials", "/admin/officials", ShieldCheck],
   ["Results", "/admin/results", Medal],
   ["Import", "/admin/import", FileUp],
 ] as const;

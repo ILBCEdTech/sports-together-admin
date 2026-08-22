@@ -1,5 +1,16 @@
 import type { LucideIcon } from "lucide-react";
-import { CalendarDays, FileUp, LayoutDashboard, Medal, Trophy, UserRound, UsersRound } from "lucide-react";
+import {
+  CalendarDays,
+  CalendarRange,
+  FileUp,
+  LayoutDashboard,
+  MapPin,
+  Medal,
+  ShieldCheck,
+  Trophy,
+  UserRound,
+  UsersRound,
+} from "lucide-react";
 
 export type NavBadge = "new" | "soon";
 export interface NavSubItem {
@@ -34,9 +45,12 @@ export const sidebarItems: NavGroup[] = [
     items: [
       { id: "dashboard", title: "Dashboard", url: "/admin/dashboard", icon: LayoutDashboard },
       { id: "sports", title: "Sports", url: "/admin/sports", icon: Trophy },
+      { id: "tournaments", title: "Tournaments", url: "/admin/tournaments", icon: CalendarRange },
       { id: "teams", title: "Teams", url: "/admin/teams", icon: UsersRound },
       { id: "players", title: "Players", url: "/admin/players", icon: UserRound },
       { id: "fixtures", title: "Fixtures", url: "/admin/fixtures", icon: CalendarDays },
+      { id: "venues", title: "Venues", url: "/admin/venues", icon: MapPin },
+      { id: "officials", title: "Officials", url: "/admin/officials", icon: ShieldCheck },
       { id: "results", title: "Results", url: "/admin/results", icon: Medal },
       { id: "import", title: "Import", url: "/admin/import", icon: FileUp },
     ],
