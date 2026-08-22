@@ -1,10 +1,5 @@
-import { AdminSection } from "@/components/admin/admin-section";
+import { PlayersManager } from "./_components/players-manager";
+
 export default function Page() {
-  return (
-    <AdminSection
-      title="Players"
-      description="Maintain player registrations and divisions."
-      items={["Player directory", "Junior divisions", "Senior divisions"]}
-    />
-  );
+  return <PlayersManager />;
 }

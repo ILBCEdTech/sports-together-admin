@@ -46,15 +46,6 @@ export type VenueRecord = {
   updated_at: string;
 };
 
-export type OfficialRecord = {
-  id: number;
-  name: string;
-  role: string | null;
-  contact: string | null;
-  created_at: string;
-  updated_at: string;
-};
-
 export type FixtureRecord = {
   id: number;
   tournament_id: number;

@@ -1,10 +1,5 @@
-import { AdminSection } from "@/components/admin/admin-section";
+import { ResultsManager } from "./_components/results-manager";
+
 export default function Page() {
-  return (
-    <AdminSection
-      title="Results"
-      description="Record scores and publish standings."
-      items={["Match results", "Event results", "Standings"]}
-    />
-  );
+  return <ResultsManager />;
 }

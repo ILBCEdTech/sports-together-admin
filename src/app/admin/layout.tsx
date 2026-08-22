@@ -8,7 +8,6 @@ import {
   LayoutDashboard,
   MapPin,
   Medal,
-  ShieldCheck,
   Trophy,
   UserRound,
   UsersRound,
@@ -25,7 +24,6 @@ const links = [
   ["Players", "/admin/players", UserRound],
   ["Fixtures", "/admin/fixtures", CalendarDays],
   ["Venues", "/admin/venues", MapPin],
-  ["Officials", "/admin/officials", ShieldCheck],
   ["Results", "/admin/results", Medal],
   ["Import", "/admin/import", FileUp],
 ] as const;

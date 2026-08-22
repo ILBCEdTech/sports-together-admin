@@ -1,10 +1,10 @@
 import type { NextRequest } from "next/server";
+import { cookies } from "next/headers";
 
 const allowedResources = new Set([
   "fixture-players",
   "fixture-teams",
   "fixtures",
-  "officials",
   "players",
   "results",
   "sports",
@@ -22,10 +22,16 @@ async function proxy(request: NextRequest, context: RouteContext<"/api/admin/[re
 
   const baseUrl = (process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:5000").replace(/\/$/, "");
   const body = request.method === "GET" ? undefined : await request.text();
+  const accessToken = (await cookies()).get("admin_access_token")?.value;
+  if (!accessToken) return Response.json({ message: "Authentication is required." }, { status: 401 });
+
   try {
     const response = await fetch(`${baseUrl}/${resource}/${segments.join("/")}`, {
       method: request.method,
-      headers: body ? { "Content-Type": "application/json" } : undefined,
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        ...(body ? { "Content-Type": "application/json" } : {}),
+      },
       body: body || undefined,
       cache: "no-store",
     });
