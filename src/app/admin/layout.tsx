@@ -1,8 +1,10 @@
+import Image from "next/image";
 import Link from "next/link";
 
-import { CalendarDays, FileUp, LayoutDashboard, Medal, Shield, Trophy, UserRound, UsersRound } from "lucide-react";
+import { CalendarDays, FileUp, LayoutDashboard, Medal, Trophy, UserRound, UsersRound } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import logo from "../../../logo.png";
 
 const links = [
   ["Dashboard", "/admin/dashboard", LayoutDashboard],
@@ -19,7 +21,7 @@ export default function AdminLayout({ children }: Readonly<{ children: React.Rea
     <div className="admin-theme min-h-screen bg-muted/30 lg:grid lg:grid-cols-[15rem_1fr]">
       <aside className="border-primary/20 border-b bg-background p-4 lg:min-h-screen lg:border-r lg:border-b-0">
         <Link href="/admin/dashboard" className="mb-5 flex items-center gap-2 px-2 font-semibold text-primary">
-          <Shield className="size-5" />
+          <Image src={logo} alt="" className="size-10 shrink-0 object-contain" />
           Sports Together Admin
         </Link>
         <nav aria-label="Admin navigation" className="grid grid-cols-2 gap-1 sm:grid-cols-4 lg:grid-cols-1">
