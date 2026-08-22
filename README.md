@@ -10,7 +10,8 @@ The public fixture experience and the admin interface are implemented as a front
 
 - Fixture schedules are read from static TypeScript data in `src/lib/fixture-data.ts`.
 - The results page is an empty state until official results are connected.
-- Admin screens currently describe the planned management areas; CRUD operations are not connected.
+- The tournaments, sports, fixtures, venues, and officials admin areas load and save records through the Sports Together backend
+  API and PostgreSQL database.
 - Spreadsheet selection is disabled until import processing and a backend are added.
 - Authentication, authorization, database persistence, and external APIs are not currently configured.
 
@@ -61,9 +62,12 @@ The public fixture experience and the admin interface are implemented as a front
 | `/admin` | Redirects to the admin dashboard |
 | `/admin/dashboard` | Administration overview |
 | `/admin/sports` | Sport configuration workspace |
+| `/admin/tournaments` | Tournament management workspace |
 | `/admin/teams` | Team management workspace |
 | `/admin/players` | Player registration workspace |
 | `/admin/fixtures` | Fixture management workspace |
+| `/admin/venues` | Venue management workspace |
+| `/admin/officials` | Official management workspace |
 | `/admin/results` | Results and standings workspace |
 | `/admin/import` | Spreadsheet import workspace |
 
@@ -83,7 +87,7 @@ npm run dev
 
 Open [http://localhost:3000](http://localhost:3000) for the public site or [http://localhost:3000/admin](http://localhost:3000/admin) for the administration workspace.
 
-No environment variables are required for the current frontend-only implementation.
+The admin API proxy uses `NEXT_PUBLIC_API_BASE_URL`. It defaults to `http://localhost:5000` for local development.
 
 ### Production
 
