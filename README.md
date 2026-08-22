@@ -1,146 +1,146 @@
-# Next.js Admin Template with TypeScript & Shadcn UI
+# Sports Together
 
-**Studio Admin** - Includes multiple dashboards, authentication layouts, customizable theme presets, and more.
+Sports Together is a responsive web application for publishing tournament schedules and providing an administration workspace for sports, teams, players, fixtures, results, and spreadsheet imports.
 
-<img src="https://github.com/arhamkhnz/next-shadcn-admin-dashboard/blob/main/media/dashboard.png?version=5" alt="Dashboard Screenshot">
+The public site currently presents the 2026-27 competition program for five sports: football, volleyball, swimming, basketball, and badminton. Each sport has a dedicated schedule with divisions, times, venues, pairings or activities, officials, equipment, and event notes where applicable.
 
-Most admin templates I found, free or paid, felt cluttered, outdated, or too rigid. I built this as a cleaner alternative with features often missing in others, such as theme toggling and layout controls, while keeping the design modern, minimal, and flexible.
+## Current Status
 
-> **View demo:** [studio admin](https://next-shadcn-admin-dashboard.vercel.app)
+The public fixture experience and the admin interface are implemented as a frontend prototype.
 
-> [!NOTE]
-> Looking for the Base UI version? Check out [next-shadcn-admin-dashboard-baseui](https://github.com/arhamkhnz/next-shadcn-admin-dashboard-baseui).
->
-> Looking for the React Aria version? Check out [arhamkhnz/next-shadcn-admin-dashboard-aria](https://github.com/arhamkhnz/next-shadcn-admin-dashboard-aria).
->
-> Looking for the TanStack Start version? Check out [tanstack-shadcn-admin-dashboard](https://github.com/arhamkhnz/tanstack-shadcn-admin-dashboard).
-
-> [!TIP]
-> I’m also working on Nuxt.js and Svelte versions of this dashboard. They’ll be live soon.
+- Fixture schedules are read from static TypeScript data in `src/lib/fixture-data.ts`.
+- The results page is an empty state until official results are connected.
+- Admin screens currently describe the planned management areas; CRUD operations are not connected.
+- Spreadsheet selection is disabled until import processing and a backend are added.
+- Authentication, authorization, database persistence, and external APIs are not currently configured.
 
 ## Features
 
-- Built with Next.js 16, TypeScript, Tailwind CSS v4, and Shadcn UI  
-- Responsive and mobile-friendly  
-- Customizable theme presets (light/dark modes with color schemes like Tangerine, Brutalist, and more)  
-- Flexible layouts (collapsible sidebar, variable content widths)  
-- Authentication flows and screens  
-- Prebuilt dashboards (Default, CRM, Finance, Analytics, Productivity) plus legacy variants  
-- Role-Based Access Control (RBAC) with config-driven UI and multi-tenant support *(planned)*  
-
-> [!NOTE]
-> The default dashboard uses the **shadcn neutral** theme.  
-> It also includes additional color presets inspired by [Tweakcn](https://tweakcn.com):  
->
-> - Tangerine  
-> - Neo Brutalism  
-> - Soft Pop  
->
-> You can create more presets by following the same structure as the existing ones.
-
-> Looking for the **Next.js 15** version?  
-> Check out the [`archive/next15`](https://github.com/arhamkhnz/next-shadcn-admin-dashboard/tree/archive/next15) branch.  
-> This branch contains the setup prior to upgrading to Next 16 and the React Compiler.
-
-> Looking for the **Next.js 14 + Tailwind CSS v3** version?  
-> Check out the [`archive/next14-tailwindv3`](https://github.com/arhamkhnz/next-shadcn-admin-dashboard/tree/archive/next14-tailwindv3) branch.  
-> It has a different color theme and is not actively maintained, but I try to keep it updated with major changes.  
+- Public landing page with an overview of all competitions
+- Combined fixtures directory
+- Dedicated pages for football, volleyball, swimming, basketball, and badminton
+- Responsive fixture tables with event details and official information
+- Results publishing placeholder
+- Separate responsive admin workspace
+- Admin sections for sports, teams, players, fixtures, results, and imports
+- Light and dark theme support with reusable theme presets
+- Accessible components built with the local shadcn/ui `radix-nova` setup
+- Vercel Analytics integration
 
 ## Tech Stack
 
-- **Framework**: Next.js 16 (App Router), TypeScript, Tailwind CSS v4  
-- **UI Components**: Shadcn UI  
-- **Validation**: Zod  
-- **Forms & State Management**: React Hook Form, Zustand  
-- **Tables & Data Handling**: TanStack Table  
-- **Tooling & DX**: Biome, Husky  
+- Next.js 16 App Router
+- React 19 and TypeScript
+- Tailwind CSS v4
+- shadcn/ui with Radix UI and Base UI primitives
+- Lucide React icons
+- Zustand for persisted interface preferences
+- Zod and React Hook Form
+- TanStack Table and Recharts
+- Biome for linting and formatting
 
-## Screens
+## Routes
 
-### Available
-- Default Dashboard  
-- CRM Dashboard  
-- Finance Dashboard  
-- Analytics Dashboard  
-- Productivity Dashboard  
-- E-commerce Dashboard  
-- Academy Dashboard  
-- Logistics Dashboard  
-- Infrastructure Dashboard  
-- File Manager  
-- Patient Monitoring  
-- Chat Page  
-- Email Page  
-- Profile  
-- Users Management  
-- Roles Management  
-- Kanban Board  
-- Tasks Page  
-- Invoice Page  
-- Calendar Page  
-- Authentication (4 screens)  
-- Legacy: Default v1, CRM v1, Finance v1, Analytics v1
+### Public
 
-### Planned
-I’ve added all the planned screens. Feel free to open an issue for requesting something specific.
+| Route | Purpose |
+| --- | --- |
+| `/` | Competition overview |
+| `/fixtures` | All fixture schedules |
+| `/results` | Published results area |
+| `/football` | Football schedule |
+| `/volleyball` | Volleyball schedule |
+| `/swimming` | Swimming program |
+| `/basketball` | Basketball schedule |
+| `/badminton` | Badminton schedule |
 
-## Colocation File System Architecture
+### Administration
 
-This project follows a **colocation-based architecture** each feature keeps its own pages, components, and logic inside its route folder.  
-Shared UI, hooks, and configuration live at the top level, making the codebase modular, scalable, and easier to maintain as the app grows.
-
-For a full breakdown of the structure with examples, see the [Next Colocation Template](https://github.com/arhamkhnz/next-colocation-template).
+| Route | Purpose |
+| --- | --- |
+| `/admin` | Redirects to the admin dashboard |
+| `/admin/dashboard` | Administration overview |
+| `/admin/sports` | Sport configuration workspace |
+| `/admin/teams` | Team management workspace |
+| `/admin/players` | Player registration workspace |
+| `/admin/fixtures` | Fixture management workspace |
+| `/admin/results` | Results and standings workspace |
+| `/admin/import` | Spreadsheet import workspace |
 
 ## Getting Started
 
-You can run this project locally, or deploy it instantly with Vercel.
+### Requirements
 
-### Deploy with Vercel
+- Node.js 20.9 or newer
+- npm
 
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Farhamkhnz%2Fnext-shadcn-admin-dashboard)
+### Installation
 
-_Deploy your own copy with one click._
-
-### Run locally
-
-1. **Clone the repository**
-   ```bash
-   git clone https://github.com/arhamkhnz/next-shadcn-admin-dashboard.git
-   ```
-   
-2. **Navigate into the project**
-   ```bash
-    cd next-shadcn-admin-dashboard
-   ```
-   
-3. **Install dependencies**
-   ```bash
-    npm install
-   ```
-
-4. **Start the development server**
-   ```bash
-   npm run dev
-   ```
-
-Your app will be running at [http://localhost:3000](http://localhost:3000)
-
-### Formatting and Linting
-
-Format, lint, and organize imports
 ```bash
-npx @biomejs/biome check --write
+npm install
+npm run dev
 ```
-> For more information on available rules, fixes, and CLI options, refer to the [Biome documentation](https://biomejs.dev/).
 
----
+Open [http://localhost:3000](http://localhost:3000) for the public site or [http://localhost:3000/admin](http://localhost:3000/admin) for the administration workspace.
 
-> [!IMPORTANT]  
-> This project is updated frequently. If you’re working from a fork or an older clone, pull the latest changes before syncing. Some updates may include breaking changes.
+No environment variables are required for the current frontend-only implementation.
 
----
+### Production
 
-Contributions are welcome. Feel free to open issues, feature requests, or start a discussion.
+```bash
+npm run build
+npm run start
+```
 
+## Available Commands
 
-**Happy Vibe Coding!**
+| Command | Description |
+| --- | --- |
+| `npm run dev` | Start the local development server |
+| `npm run build` | Create a production build |
+| `npm run start` | Run the production server |
+| `npm run lint` | Run Biome lint checks |
+| `npm run format` | Format the codebase with Biome |
+| `npm run check` | Run Biome formatting, lint, and import checks |
+| `npm run check:fix` | Apply safe Biome fixes |
+| `npm run generate:presets` | Regenerate theme preset CSS |
+
+## Project Structure
+
+```text
+src/
+|-- app/
+|   |-- (public)/          # Public competition pages
+|   |-- admin/             # Administration routes and layout
+|   |-- globals.css        # Tailwind and global styles
+|   `-- layout.tsx         # Root providers and metadata
+|-- components/
+|   |-- admin/             # Shared admin components
+|   `-- ui/                # Local shadcn/ui components
+|-- config/                # Application metadata
+|-- hooks/                 # Shared React hooks
+|-- lib/
+|   |-- fixture-data.ts    # Current sports and fixture source
+|   `-- preferences/       # Theme and layout preferences
+|-- navigation/            # Navigation definitions
+|-- scripts/               # Theme boot and preset generation
+|-- server/                # Server actions
+|-- stores/                # Zustand stores and providers
+`-- styles/presets/        # Theme preset styles
+```
+
+Public routes are grouped under `src/app/(public)` without adding a URL segment. Admin routes live under `src/app/admin` and use a separate navigation layout.
+
+## Development Notes
+
+- Keep route-specific components beside the route that owns them.
+- Reuse components from `src/components/ui` without modifying their source.
+- Use semantic theme tokens so changes work across light mode, dark mode, and presets.
+- Follow the repository's Biome rules: double quotes, semicolons, two-space indentation, sorted imports, and a 120-character line width.
+- Use conventional commit prefixes such as `feat:`, `fix:`, `refactor:`, `docs:`, and `chore:`.
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) and [AGENTS.md](AGENTS.md) for the full contribution and implementation guidelines.
+
+## License
+
+This project is distributed under the terms in [LICENSE](LICENSE).
