@@ -13,6 +13,7 @@ import {
 type ResultSport = {
   id: number;
   name: string;
+  slug: string;
 };
 
 export function PastResultsMenu({ sports }: { sports: ResultSport[] }) {
@@ -30,7 +31,7 @@ export function PastResultsMenu({ sports }: { sports: ResultSport[] }) {
         {sports.map((sport) => (
           <DropdownMenuItem key={sport.id} asChild className="rounded-none p-0 focus:bg-slate-100">
             <Link
-              href={`/results?sport=${sport.id}`}
+              href={`/results/${sport.slug}`}
               className="block w-full px-4 py-4 font-bold text-2xl text-slate-950 tracking-tight"
             >
               {sport.name}

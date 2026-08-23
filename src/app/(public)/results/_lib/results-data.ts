@@ -30,6 +30,19 @@ async function getResource<T>(path: string, schema: z.ZodType<T>): Promise<T> {
 
 export type RankingGroup = { title: string; teams: Array<{ id: number; name: string }> };
 
+export function sportSlug(name: string) {
+  return name
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "");
+}
+
+export async function getResultSports() {
+  const sports = await getResource("sports", z.array(sportSchema));
+  return sports.map((sport) => ({ ...sport, slug: sportSlug(sport.name) }));
+}
+
 function rankTeams(teams: Team[], fixtures: Fixture[], fixtureTeams: FixtureTeam[], results: Result[]) {
   const finalResults = new Map(
     results.filter((result) => result.status === "FINAL").map((result) => [result.fixture_id, result]),
@@ -97,4 +110,11 @@ export async function getRankingGroups(requestedSportId?: number) {
   });
 
   return { sportName: sport.name, groups };
+}
+
+export async function getRankingGroupsBySlug(slug: string) {
+  const sports = await getResource("sports", z.array(sportSchema));
+  const sport = sports.find((item) => sportSlug(item.name) === slug);
+  if (!sport) return null;
+  return getRankingGroups(sport.id);
 }
