@@ -5,9 +5,11 @@ const allowedResources = new Set([
   "fixture-players",
   "fixture-teams",
   "fixtures",
+  "gallery-images",
   "players",
   "results",
   "sports",
+  "sport-galleries",
   "team-players",
   "teams",
   "tournaments",
@@ -16,12 +18,19 @@ const allowedResources = new Set([
 
 async function proxy(request: NextRequest, context: RouteContext<"/api/admin/[resource]/[[...segments]]">) {
   const { resource, segments = [] } = await context.params;
-  if (!allowedResources.has(resource) || segments.some((segment) => !/^\d+$/.test(segment))) {
+  const hasValidSegments =
+    segments.every((segment) => /^\d+$/.test(segment)) ||
+    (resource === "sport-galleries" &&
+      segments.length === 2 &&
+      /^\d+$/.test(segments[0]) &&
+      segments[1] === "images");
+  if (!allowedResources.has(resource) || !hasValidSegments) {
     return Response.json({ message: "Invalid admin API resource." }, { status: 400 });
   }
 
   const baseUrl = (process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:5000").replace(/\/$/, "");
-  const body = request.method === "GET" ? undefined : await request.text();
+  const contentType = request.headers.get("content-type");
+  const body = request.method === "GET" ? undefined : await request.arrayBuffer();
   const accessToken = (await cookies()).get("admin_access_token")?.value;
   if (!accessToken) return Response.json({ message: "Authentication is required." }, { status: 401 });
 
@@ -30,9 +39,9 @@ async function proxy(request: NextRequest, context: RouteContext<"/api/admin/[re
       method: request.method,
       headers: {
         Authorization: `Bearer ${accessToken}`,
-        ...(body ? { "Content-Type": "application/json" } : {}),
+        ...(contentType ? { "Content-Type": contentType } : {}),
       },
-      body: body || undefined,
+      body,
       cache: "no-store",
     });
     return new Response(await response.text(), {

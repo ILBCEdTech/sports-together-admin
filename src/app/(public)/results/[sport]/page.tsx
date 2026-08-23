@@ -4,8 +4,9 @@ import { notFound } from "next/navigation";
 
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
+import { SportGallerySection } from "../_components/sport-gallery-section";
 import { SwimmingRankingTable } from "../_components/swimming-ranking-table";
-import { getRankingGroupsBySlug, getResultSports } from "../_lib/results-data";
+import { getRankingGroupsBySlug, getResultSports, getSportGalleries } from "../_lib/results-data";
 
 const sportHero: Record<string, string> = {
   badminton: "/images/badminton-results.png",
@@ -23,7 +24,8 @@ export default async function SportResultsPage({ params }: PageProps<"/results/[
     const [result, sports] = await Promise.all([getRankingGroupsBySlug(sport), getResultSports()]);
     if (!result) notFound();
 
-    const { sportName, groups } = result;
+    const { sportId, sportName, groups } = result;
+    const galleries = sportId ? await getSportGalleries(sportId).catch(() => []) : [];
     const isSwimming = sportName.toLowerCase() === "swimming";
     const swimmingTeams = groups
       .flatMap((group) => group.teams)
@@ -102,6 +104,7 @@ export default async function SportResultsPage({ params }: PageProps<"/results/[
           ) : (
             <p className="text-slate-600">No teams are available for this sport yet.</p>
           )}
+          <SportGallerySection galleries={galleries} sportName={sportName} />
         </div>
       </main>
     );

@@ -4,7 +4,7 @@ import Link from "next/link";
 import {
   CalendarDays,
   CalendarRange,
-  FileUp,
+  Images,
   LayoutDashboard,
   MapPin,
   Medal,
@@ -19,13 +19,13 @@ import logo from "../../../logo.png";
 const links = [
   ["Dashboard", "/admin/dashboard", LayoutDashboard],
   ["Sports", "/admin/sports", Trophy],
+  ["Galleries", "/admin/galleries", Images],
   ["Tournaments", "/admin/tournaments", CalendarRange],
   ["Teams", "/admin/teams", UsersRound],
   ["Players", "/admin/players", UserRound],
   ["Fixtures", "/admin/fixtures", CalendarDays],
   ["Venues", "/admin/venues", MapPin],
   ["Results", "/admin/results", Medal],
-  ["Import", "/admin/import", FileUp],
 ] as const;
 
 export default function AdminLayout({ children }: Readonly<{ children: React.ReactNode }>) {

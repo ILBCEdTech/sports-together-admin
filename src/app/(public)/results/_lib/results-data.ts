@@ -15,6 +15,20 @@ const resultSchema = z.object({
   team_b_score: z.number().nullable(),
   status: z.enum(["PENDING", "FINAL"]),
 });
+const galleryImageSchema = z.object({
+  id: z.number().int(),
+  image_url: z.string().url(),
+  presigned_url: z.string().url().nullable().optional(),
+  alt_text: z.string().nullable(),
+  sort_order: z.number().int(),
+});
+const sportGallerySchema = z.object({
+  id: z.number().int(),
+  sport_id: z.number().int(),
+  title: z.string(),
+  description: z.string().nullable(),
+  images: z.array(galleryImageSchema),
+});
 
 type Team = z.infer<typeof teamSchema>;
 type Fixture = z.infer<typeof fixtureSchema>;
@@ -29,6 +43,7 @@ async function getResource<T>(path: string, schema: z.ZodType<T>): Promise<T> {
 }
 
 export type RankingGroup = { title: string; teams: Array<{ id: number; name: string }> };
+export type SportGallery = z.infer<typeof sportGallerySchema>;
 
 export function sportSlug(name: string) {
   return name
@@ -89,7 +104,7 @@ export async function getRankingGroups(requestedSportId?: number) {
     sports.find((item) => item.id === requestedSportId) ??
     sports.find((item) => item.name.toLowerCase() === "basketball") ??
     sports[0];
-  if (!sport) return { sportName: "Basketball", groups: [] as RankingGroup[] };
+  if (!sport) return { sportId: null, sportName: "Basketball", groups: [] as RankingGroup[] };
 
   const sportTeams = teams.filter((team) => team.sport_id === sport.id);
   const sportFixtures = fixtures.filter((fixture) => fixture.sport_id === sport.id);
@@ -109,7 +124,11 @@ export async function getRankingGroups(requestedSportId?: number) {
     };
   });
 
-  return { sportName: sport.name, groups };
+  return { sportId: sport.id, sportName: sport.name, groups };
+}
+
+export function getSportGalleries(sportId: number) {
+  return getResource(`sport-galleries?sportId=${sportId}`, z.array(sportGallerySchema));
 }
 
 export async function getRankingGroupsBySlug(slug: string) {

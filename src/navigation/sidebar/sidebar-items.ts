@@ -2,7 +2,7 @@ import type { LucideIcon } from "lucide-react";
 import {
   CalendarDays,
   CalendarRange,
-  FileUp,
+  Images,
   LayoutDashboard,
   MapPin,
   Medal,
@@ -44,13 +44,13 @@ export const sidebarItems: NavGroup[] = [
     items: [
       { id: "dashboard", title: "Dashboard", url: "/admin/dashboard", icon: LayoutDashboard },
       { id: "sports", title: "Sports", url: "/admin/sports", icon: Trophy },
+      { id: "galleries", title: "Galleries", url: "/admin/galleries", icon: Images },
       { id: "tournaments", title: "Tournaments", url: "/admin/tournaments", icon: CalendarRange },
       { id: "teams", title: "Teams", url: "/admin/teams", icon: UsersRound },
       { id: "players", title: "Players", url: "/admin/players", icon: UserRound },
       { id: "fixtures", title: "Fixtures", url: "/admin/fixtures", icon: CalendarDays },
       { id: "venues", title: "Venues", url: "/admin/venues", icon: MapPin },
       { id: "results", title: "Results", url: "/admin/results", icon: Medal },
-      { id: "import", title: "Import", url: "/admin/import", icon: FileUp },
     ],
   },
 ];

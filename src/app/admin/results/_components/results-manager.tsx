@@ -227,13 +227,13 @@ export function ResultsManager() {
         <CardHeader className="gap-4 border-b">
           <CardTitle>Result records</CardTitle>
           {sports.length > 0 && (
-            <Tabs value={activeSportId} onValueChange={setActiveSportId}>
-              <TabsList className="h-10 max-w-full justify-start overflow-x-auto">
+            <Tabs value={activeSportId} onValueChange={setActiveSportId} className="mx-auto w-full max-w-3xl">
+              <TabsList className="grid h-10 w-full grid-flow-col overflow-hidden">
                 {sports.map((sport) => (
                   <TabsTrigger
                     key={sport.id}
                     value={String(sport.id)}
-                    className="h-8 flex-none px-4 data-active:bg-primary data-active:text-primary-foreground dark:data-active:bg-primary dark:data-active:text-primary-foreground"
+                    className="h-8 min-w-0 px-3 data-active:bg-primary data-active:text-primary-foreground dark:data-active:bg-primary dark:data-active:text-primary-foreground"
                   >
                     {sport.name}
                   </TabsTrigger>

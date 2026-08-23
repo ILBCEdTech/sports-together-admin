@@ -1,10 +1,8 @@
-import { AdminSection } from "@/components/admin/admin-section";
-export default function Page() {
-  return (
-    <AdminSection
-      title="Dashboard"
-      description="Tournament operations at a glance."
-      items={["Five sports", "Upcoming fixtures", "Pending results"]}
-    />
-  );
+import { DashboardOverview } from "./_components/dashboard-overview";
+import { getDashboardOverview } from "./_lib/dashboard-data";
+
+export default async function Page() {
+  const overview = await getDashboardOverview();
+
+  return <DashboardOverview overview={overview} />;
 }
