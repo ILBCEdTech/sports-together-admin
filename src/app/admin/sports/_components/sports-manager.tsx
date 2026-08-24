@@ -210,7 +210,8 @@ export function SportsManager() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead className="pl-4">Sport</TableHead>
+                  <TableHead className="w-14 pl-4">Sr.</TableHead>
+                  <TableHead>Sport</TableHead>
                   <TableHead>Code</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Last updated</TableHead>
@@ -220,9 +221,10 @@ export function SportsManager() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredSports.map((sport) => (
+                {filteredSports.map((sport, index) => (
                   <TableRow key={sport.id}>
-                    <TableCell className="pl-4 font-medium">{sport.name}</TableCell>
+                    <TableCell className="pl-4 text-muted-foreground tabular-nums">{index + 1}</TableCell>
+                    <TableCell className="font-medium">{sport.name}</TableCell>
                     <TableCell>
                       <span className="font-mono text-xs">{sport.code}</span>
                     </TableCell>

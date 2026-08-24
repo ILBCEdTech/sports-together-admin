@@ -238,7 +238,8 @@ export function FixturesManager() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead className="pl-4">Tournament</TableHead>
+                  <TableHead className="w-14 pl-4">Sr.</TableHead>
+                  <TableHead>Tournament</TableHead>
                   <TableHead>Fixture</TableHead>
                   <TableHead>Sport</TableHead>
                   <TableHead>Start</TableHead>
@@ -247,13 +248,14 @@ export function FixturesManager() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {fixtures.map((item) => (
+                {fixtures.map((item, index) => (
                   <TableRow key={item.id}>
-                    <TableCell className="pl-4">
+                    <TableCell className="pl-4 text-muted-foreground tabular-nums">{index + 1}</TableCell>
+                    <TableCell>
                       {tournaments.find((tournament) => tournament.id === item.tournament_id)?.name ?? "Unknown"}
                     </TableCell>
                     <TableCell>
-                      <div className="font-medium">Fixture {item.id}</div>
+                      <div className="font-medium">{item.match_number ?? `Event ${index + 1}`}</div>
                       <div className="text-xs text-muted-foreground">
                         {item.round ??
                           (usesFixtureLevel(sports.find((sport) => sport.id === item.sport_id))

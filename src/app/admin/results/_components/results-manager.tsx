@@ -249,7 +249,8 @@ export function ResultsManager() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead className="pl-4">Fixture</TableHead>
+                  <TableHead className="w-14 pl-4">Sr.</TableHead>
+                  <TableHead>Fixture</TableHead>
                   <TableHead>Score</TableHead>
                   <TableHead>Winner</TableHead>
                   <TableHead>Status</TableHead>
@@ -257,9 +258,10 @@ export function ResultsManager() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredResults.map((result) => (
+                {filteredResults.map((result, index) => (
                   <TableRow key={result.id}>
-                    <TableCell className="pl-4 font-medium">{fixtureLabel(result.fixture_id)}</TableCell>
+                    <TableCell className="pl-4 text-muted-foreground tabular-nums">{index + 1}</TableCell>
+                    <TableCell className="font-medium">{fixtureLabel(result.fixture_id)}</TableCell>
                     <TableCell>
                       {result.team_a_score ?? "—"} – {result.team_b_score ?? "—"}
                     </TableCell>

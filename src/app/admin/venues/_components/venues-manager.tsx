@@ -114,16 +114,18 @@ export function VenuesManager() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead className="pl-4">Name</TableHead>
+                  <TableHead className="w-14 pl-4">Sr.</TableHead>
+                  <TableHead>Name</TableHead>
                   <TableHead>Type</TableHead>
                   <TableHead>Location</TableHead>
                   <TableHead className="pr-4 text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {venues.map((venue) => (
+                {venues.map((venue, index) => (
                   <TableRow key={venue.id}>
-                    <TableCell className="pl-4 font-medium">{venue.name}</TableCell>
+                    <TableCell className="pl-4 text-muted-foreground tabular-nums">{index + 1}</TableCell>
+                    <TableCell className="font-medium">{venue.name}</TableCell>
                     <TableCell>
                       <Badge variant="outline">{venue.type.toLowerCase()}</Badge>
                     </TableCell>

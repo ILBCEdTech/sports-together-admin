@@ -119,15 +119,17 @@ export function PlayersManager() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead className="pl-4">Name</TableHead>
+                  <TableHead className="w-14 pl-4">Sr.</TableHead>
+                  <TableHead>Name</TableHead>
                   <TableHead>School</TableHead>
                   <TableHead className="pr-4 text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {players.map((player) => (
+                {players.map((player, index) => (
                   <TableRow key={player.id}>
-                    <TableCell className="pl-4 font-medium">{player.name}</TableCell>
+                    <TableCell className="pl-4 text-muted-foreground tabular-nums">{index + 1}</TableCell>
+                    <TableCell className="font-medium">{player.name}</TableCell>
                     <TableCell>{player.school_name}</TableCell>
                     <TableCell className="pr-4 text-right">
                       <Button

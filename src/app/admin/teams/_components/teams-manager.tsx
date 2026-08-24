@@ -246,6 +246,7 @@ export function TeamsManager() {
                     >
                       <div className="flex min-h-14 items-center justify-between gap-2 px-3">
                         <div className="min-w-0">
+                          <span className="block text-[10px] font-medium opacity-70">Sr. {index + 1}</span>
                           <span className="block truncate font-semibold">{team.name}</span>
                           <span className="block truncate text-xs opacity-80">
                             {sports.find((sport) => sport.id === team.sport_id)?.name ?? "Unknown sport"}

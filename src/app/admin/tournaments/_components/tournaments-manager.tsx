@@ -148,7 +148,8 @@ export function TournamentsManager() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead className="pl-4">Tournament</TableHead>
+                  <TableHead className="w-14 pl-4">Sr.</TableHead>
+                  <TableHead>Tournament</TableHead>
                   <TableHead>Dates</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead className="pr-4 text-right">
@@ -157,9 +158,10 @@ export function TournamentsManager() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {tournaments.map((item) => (
+                {tournaments.map((item, index) => (
                   <TableRow key={item.id}>
-                    <TableCell className="pl-4 font-medium">{item.name}</TableCell>
+                    <TableCell className="pl-4 text-muted-foreground tabular-nums">{index + 1}</TableCell>
+                    <TableCell className="font-medium">{item.name}</TableCell>
                     <TableCell className="text-muted-foreground">
                       {dateLabel(item.start_date)} - {dateLabel(item.end_date)}
                     </TableCell>
