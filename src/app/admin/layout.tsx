@@ -1,11 +1,14 @@
 import Image from "next/image";
 import Link from "next/link";
+import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
 
 import {
   CalendarDays,
   CalendarRange,
   Images,
   LayoutDashboard,
+  LogOut,
   MapPin,
   Medal,
   Trophy,
@@ -29,6 +32,15 @@ const links = [
 ] as const;
 
 export default function AdminLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+  async function logout() {
+    "use server";
+
+    const cookieStore = await cookies();
+    cookieStore.delete("admin_access_token");
+    cookieStore.delete("admin_refresh_token");
+    redirect("/");
+  }
+
   return (
     <div className="admin-theme min-h-screen bg-muted/30 lg:grid lg:grid-cols-[15rem_1fr]">
       <aside className="border-primary/20 border-b bg-background p-4 lg:min-h-screen lg:border-r lg:border-b-0">
@@ -46,7 +58,13 @@ export default function AdminLayout({ children }: Readonly<{ children: React.Rea
             </Button>
           ))}
         </nav>
-        <Button asChild variant="outline" className="mt-5 w-full">
+        <form action={logout} className="mt-1">
+          <Button type="submit" variant="ghost" className="w-full justify-start">
+            <LogOut />
+            Sign out
+          </Button>
+        </form>
+        <Button asChild variant="outline" className="mt-2 w-full">
           <Link href="/">View public site</Link>
         </Button>
       </aside>

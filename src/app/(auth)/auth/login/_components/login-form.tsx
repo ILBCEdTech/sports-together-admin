@@ -65,7 +65,7 @@ export function LoginForm() {
               aria-pressed={showPassword}
               disabled={pending}
             >
-              {showPassword ? <EyeOff /> : <Eye />}
+              {showPassword ? <Eye /> : <EyeOff />}
             </Button>
           </div>
           <FieldError>{state.errors?.password}</FieldError>
