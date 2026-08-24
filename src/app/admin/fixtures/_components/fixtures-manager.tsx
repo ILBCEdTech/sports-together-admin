@@ -24,7 +24,7 @@ import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { adminApi } from "@/lib/admin-api.client";
 
-type Lookup = { id: number; name: string; code?: string };
+type Lookup = { id: number; name: string; code?: string | null };
 type FixtureForm = {
   tournament_id: number;
   sport_id: number;
