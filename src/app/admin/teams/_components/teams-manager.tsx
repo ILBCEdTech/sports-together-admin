@@ -1,7 +1,7 @@
 "use client";
 
-import { type FormEvent, useEffect, useMemo, useState } from "react";
-import { Pencil, Plus, Search, Trash2, UsersRound } from "lucide-react";
+import { type FormEvent, useEffect, useState } from "react";
+import { Pencil, Plus, Trash2, UsersRound } from "lucide-react";
 import { toast } from "sonner";
 import { z } from "zod";
 
@@ -33,7 +33,10 @@ import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { adminApi } from "@/lib/admin-api.client";
+import { type AdminListMeta, type AdminListPayload, normalizeAdminListPayload } from "@/lib/admin-list";
 import type { PlayerRecord, TeamPlayerRecord, TeamRecord } from "@/lib/admin-records";
+import { AdminFilterBar, AdminListPagination } from "@/components/admin/admin-list-controls";
+import { useAdminListQuery } from "@/hooks/use-admin-list-query";
 
 type SportLookup = { id: number; name: string; code: string; is_active: boolean };
 type TeamForm = { name: string; sport_id: number; player_ids: number[] };
@@ -51,7 +54,9 @@ const schema = z.object({
 });
 
 export function TeamsManager() {
+  const listQuery = useAdminListQuery();
   const [teams, setTeams] = useState<TeamRecord[]>([]);
+  const [meta, setMeta] = useState<AdminListMeta>({ page: 1, pageSize: 20, total: 0, pageCount: 1 });
   const [sports, setSports] = useState<SportLookup[]>([]);
   const [players, setPlayers] = useState<PlayerRecord[]>([]);
   const [teamPlayers, setTeamPlayers] = useState<TeamPlayerRecord[]>([]);
@@ -61,41 +66,37 @@ export function TeamsManager() {
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<TeamRecord | null>(null);
   const [pendingDelete, setPendingDelete] = useState<TeamRecord | null>(null);
-  const [query, setQuery] = useState("");
-  const [activeSportId, setActiveSportId] = useState("");
+  const activeSportId = listQuery.values.get("sportId") ?? "";
   const [form, setForm] = useState<TeamForm>({ name: "", sport_id: 0, player_ids: [] });
   const [errors, setErrors] = useState<Partial<Record<keyof TeamForm, string>>>({});
 
   useEffect(() => {
     Promise.all([
-      adminApi<TeamRecord[]>("teams"),
       adminApi<SportLookup[]>("sports"),
       adminApi<PlayerRecord[]>("players"),
       adminApi<TeamPlayerRecord[]>("team-players"),
     ])
-      .then(([teamRecords, sportRecords, playerRecords, rosterRecords]) => {
-        setTeams(teamRecords);
+      .then(([sportRecords, playerRecords, rosterRecords]) => {
         setSports(sportRecords);
         setPlayers(playerRecords);
         setTeamPlayers(rosterRecords);
-        setActiveSportId(
-          (current) =>
-            current || String(sportRecords.find((sport) => sport.is_active)?.id ?? sportRecords[0]?.id ?? ""),
-        );
+      })
+      .catch((error: Error) => toast.error(error.message));
+  }, []);
+
+  useEffect(() => {
+    setLoading(true);
+    adminApi<AdminListPayload<TeamRecord>>(`teams?${listQuery.requestQuery}`)
+      .then((payload) => {
+        const response = normalizeAdminListPayload(payload);
+        setTeams(response.data);
+        setMeta(response.meta);
       })
       .catch((error: Error) => toast.error(error.message))
       .finally(() => setLoading(false));
-  }, []);
+  }, [listQuery.requestQuery]);
 
-  const filteredTeams = useMemo(() => {
-    const normalized = query.trim().toLowerCase();
-    const sportTeams = activeSportId ? teams.filter((team) => team.sport_id === Number(activeSportId)) : teams;
-    if (!normalized) return sportTeams;
-    return sportTeams.filter((team) => {
-      const sport = sports.find((item) => item.id === team.sport_id)?.name ?? "";
-      return [team.name, team.code ?? "", sport].some((value) => value.toLowerCase().includes(normalized));
-    });
-  }, [activeSportId, query, sports, teams]);
+  const filteredTeams = teams;
 
   function startCreate() {
     setEditing(null);
@@ -198,26 +199,20 @@ export function TeamsManager() {
 
       <Card>
         <CardHeader className="gap-4 border-b">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            <CardTitle>Team records</CardTitle>
-            <div className="relative w-full sm:w-64">
-              <Search className="absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                value={query}
-                onChange={(event) => setQuery(event.target.value)}
-                placeholder="Search teams..."
-                aria-label="Search teams"
-                className="pl-8"
-              />
-            </div>
-          </div>
+          <CardTitle>Team records</CardTitle>
+          <AdminFilterBar
+            search={listQuery.search}
+            searchPlaceholder="Search team name or code"
+            onSearchChange={listQuery.setSearch}
+            values={listQuery.values}
+            onFilterChange={listQuery.setFilter}
+            onClear={listQuery.clearFilters}
+            hasFilters={listQuery.hasFilters}
+          />
           {sports.length > 0 && (
             <Tabs
               value={activeSportId}
-              onValueChange={(value) => {
-                setActiveSportId(value);
-                setQuery("");
-              }}
+              onValueChange={(value) => listQuery.setFilter("sportId", value)}
             >
               <TabsList variant="line" className="max-w-full justify-start overflow-x-auto">
                 {sports.map((sport) => (
@@ -233,7 +228,7 @@ export function TeamsManager() {
           )}
         </CardHeader>
         <CardContent className="px-0">
-          {loading ? (
+          {loading || listQuery.isPending ? (
             <p className="p-6 text-sm text-muted-foreground">Loading teams...</p>
           ) : filteredTeams.length ? (
             <Table>
@@ -246,7 +241,9 @@ export function TeamsManager() {
                     >
                       <div className="flex min-h-14 items-center justify-between gap-2 px-3">
                         <div className="min-w-0">
-                          <span className="block text-[10px] font-medium opacity-70">Sr. {index + 1}</span>
+                          <span className="block text-[10px] font-medium opacity-70">
+                            Sr. {(meta.page - 1) * meta.pageSize + index + 1}
+                          </span>
                           <span className="block truncate font-semibold">{team.name}</span>
                           <span className="block truncate text-xs opacity-80">
                             {sports.find((sport) => sport.id === team.sport_id)?.name ?? "Unknown sport"}
@@ -314,13 +311,14 @@ export function TeamsManager() {
                 <EmptyMedia variant="icon">
                   <UsersRound />
                 </EmptyMedia>
-                <EmptyTitle>{query ? "No teams found" : "No teams yet"}</EmptyTitle>
+                <EmptyTitle>{listQuery.hasFilters ? "No teams found" : "No teams yet"}</EmptyTitle>
                 <EmptyDescription>
-                  {query ? "Try a different search term." : "Create the first team for an active sport."}
+                  {listQuery.hasFilters ? "Clear or adjust the filters." : "Create the first team for an active sport."}
                 </EmptyDescription>
               </EmptyHeader>
             </Empty>
           )}
+          <AdminListPagination meta={meta} onPageChange={listQuery.setPage} />
         </CardContent>
       </Card>
 

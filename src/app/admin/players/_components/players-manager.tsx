@@ -6,7 +6,10 @@ import { toast } from "sonner";
 import { z } from "zod";
 
 import { adminApi } from "@/lib/admin-api.client";
+import { type AdminListMeta, type AdminListPayload, normalizeAdminListPayload } from "@/lib/admin-list";
 import type { PlayerRecord } from "@/lib/admin-records";
+import { AdminFilterBar, AdminListPagination } from "@/components/admin/admin-list-controls";
+import { useAdminListQuery } from "@/hooks/use-admin-list-query";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -34,7 +37,11 @@ const playerSchema = z.object({
 const emptyForm: PlayerForm = { name: "", school_name: "" };
 
 export function PlayersManager() {
+  const listQuery = useAdminListQuery();
   const [players, setPlayers] = useState<PlayerRecord[]>([]);
+  const [sports, setSports] = useState<Array<{ id: number; name: string }>>([]);
+  const [teams, setTeams] = useState<Array<{ id: number; name: string }>>([]);
+  const [meta, setMeta] = useState<AdminListMeta>({ page: 1, pageSize: 20, total: 0, pageCount: 1 });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [open, setOpen] = useState(false);
@@ -43,11 +50,25 @@ export function PlayersManager() {
   const [errors, setErrors] = useState<Partial<Record<keyof PlayerForm, string>>>({});
 
   useEffect(() => {
-    adminApi<PlayerRecord[]>("players")
-      .then(setPlayers)
+    Promise.all([adminApi<Array<{ id: number; name: string }>>("sports"), adminApi<Array<{ id: number; name: string }>>("teams")])
+      .then(([sportRows, teamRows]) => {
+        setSports(sportRows);
+        setTeams(teamRows);
+      })
+      .catch((error: Error) => toast.error(error.message));
+  }, []);
+
+  useEffect(() => {
+    setLoading(true);
+    adminApi<AdminListPayload<PlayerRecord>>(`players?${listQuery.requestQuery}`)
+      .then((payload) => {
+        const response = normalizeAdminListPayload(payload);
+        setPlayers(response.data);
+        setMeta(response.meta);
+      })
       .catch((error: Error) => toast.error(error.message))
       .finally(() => setLoading(false));
-  }, []);
+  }, [listQuery.requestQuery]);
 
   function startCreate() {
     setEditing(null);
@@ -111,9 +132,23 @@ export function PlayersManager() {
       <Card>
         <CardHeader className="border-b">
           <CardTitle>Player records</CardTitle>
+          <AdminFilterBar
+            search={listQuery.search}
+            searchPlaceholder="Search name or registration number"
+            onSearchChange={listQuery.setSearch}
+            values={listQuery.values}
+            onFilterChange={listQuery.setFilter}
+            onClear={listQuery.clearFilters}
+            hasFilters={listQuery.hasFilters}
+            fields={[
+              { key: "sportId", label: "Sports", options: sports.map((item) => ({ label: item.name, value: String(item.id) })) },
+              { key: "teamId", label: "Teams", options: teams.map((item) => ({ label: item.name, value: String(item.id) })) },
+              { key: "gender", label: "Genders", options: [{ label: "Male", value: "MALE" }, { label: "Female", value: "FEMALE" }] },
+            ]}
+          />
         </CardHeader>
         <CardContent className="px-0">
-          {loading ? (
+          {loading || listQuery.isPending ? (
             <p className="p-6 text-sm text-muted-foreground">Loading players...</p>
           ) : players.length ? (
             <Table>
@@ -128,7 +163,9 @@ export function PlayersManager() {
               <TableBody>
                 {players.map((player, index) => (
                   <TableRow key={player.id}>
-                    <TableCell className="pl-4 text-muted-foreground tabular-nums">{index + 1}</TableCell>
+                    <TableCell className="pl-4 text-muted-foreground tabular-nums">
+                      {(meta.page - 1) * meta.pageSize + index + 1}
+                    </TableCell>
                     <TableCell className="font-medium">{player.name}</TableCell>
                     <TableCell>{player.school_name}</TableCell>
                     <TableCell className="pr-4 text-right">
@@ -152,11 +189,14 @@ export function PlayersManager() {
                 <EmptyMedia variant="icon">
                   <UserRound />
                 </EmptyMedia>
-                <EmptyTitle>No players yet</EmptyTitle>
-                <EmptyDescription>Create the first database player.</EmptyDescription>
+                <EmptyTitle>{listQuery.hasFilters ? "No players match these filters" : "No players yet"}</EmptyTitle>
+                <EmptyDescription>
+                  {listQuery.hasFilters ? "Clear or adjust the filters to see more records." : "Create the first database player."}
+                </EmptyDescription>
               </EmptyHeader>
             </Empty>
           )}
+          <AdminListPagination meta={meta} onPageChange={listQuery.setPage} />
         </CardContent>
       </Card>
       <Dialog open={open} onOpenChange={setOpen}>

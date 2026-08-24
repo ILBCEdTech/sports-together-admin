@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { z } from "zod";
 
 import type { FixtureRecord, FixtureStatus, FixtureTeamRecord, TeamRecord, VenueRecord } from "@/lib/admin-records";
+import { AdminFilterBar, AdminListPagination } from "@/components/admin/admin-list-controls";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -23,6 +24,8 @@ import { Input } from "@/components/ui/input";
 import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { adminApi } from "@/lib/admin-api.client";
+import { type AdminListMeta, type AdminListPayload, normalizeAdminListPayload } from "@/lib/admin-list";
+import { useAdminListQuery } from "@/hooks/use-admin-list-query";
 
 type Lookup = { id: number; name: string; code?: string | null };
 type FixtureForm = {
@@ -87,7 +90,9 @@ const dateLabel = (value: string) =>
     minute: "2-digit",
   }).format(new Date(value));
 export function FixturesManager() {
+  const listQuery = useAdminListQuery();
   const [fixtures, setFixtures] = useState<FixtureRecord[]>([]);
+  const [meta, setMeta] = useState<AdminListMeta>({ page: 1, pageSize: 20, total: 0, pageCount: 1 });
   const [sports, setSports] = useState<Lookup[]>([]);
   const [tournaments, setTournaments] = useState<Lookup[]>([]);
   const [venues, setVenues] = useState<VenueRecord[]>([]);
@@ -106,24 +111,33 @@ export function FixturesManager() {
 
   useEffect(() => {
     Promise.all([
-      adminApi<FixtureRecord[]>("fixtures"),
       adminApi<Lookup[]>("sports"),
       adminApi<Lookup[]>("tournaments"),
       adminApi<VenueRecord[]>("venues"),
       adminApi<TeamRecord[]>("teams"),
       adminApi<FixtureTeamRecord[]>("fixture-teams"),
     ])
-      .then(([fixtureRows, sportRows, tournamentRows, venueRows, teamRows, teamLinks]) => {
-        setFixtures(fixtureRows);
+      .then(([sportRows, tournamentRows, venueRows, teamRows, teamLinks]) => {
         setSports(sportRows);
         setTournaments(tournamentRows);
         setVenues(venueRows);
         setTeams(teamRows);
         setFixtureTeams(teamLinks);
       })
+      .catch((error: Error) => toast.error(error.message));
+  }, []);
+
+  useEffect(() => {
+    setLoading(true);
+    adminApi<AdminListPayload<FixtureRecord>>(`fixtures?${listQuery.requestQuery}`)
+      .then((payload) => {
+        const response = normalizeAdminListPayload(payload);
+        setFixtures(response.data);
+        setMeta(response.meta);
+      })
       .catch((error: Error) => toast.error(error.message))
       .finally(() => setLoading(false));
-  }, []);
+  }, [listQuery.requestQuery]);
 
   function startCreate() {
     setEditing(null);
@@ -230,9 +244,27 @@ export function FixturesManager() {
       <Card>
         <CardHeader className="border-b">
           <CardTitle>Fixture records</CardTitle>
+          <AdminFilterBar
+            search={listQuery.search}
+            searchPlaceholder="Search match number or team"
+            onSearchChange={listQuery.setSearch}
+            values={listQuery.values}
+            onFilterChange={listQuery.setFilter}
+            onClear={listQuery.clearFilters}
+            hasFilters={listQuery.hasFilters}
+            fields={[
+              { key: "sportId", label: "Sports", options: sports.map((item) => ({ label: item.name, value: String(item.id) })) },
+              { key: "tournamentId", label: "Tournaments", options: tournaments.map((item) => ({ label: item.name, value: String(item.id) })) },
+              { key: "venueId", label: "Venues", options: venues.map((item) => ({ label: item.name, value: String(item.id) })) },
+              { key: "from", label: "From date", type: "date" },
+              { key: "to", label: "To date", type: "date" },
+              { key: "status", label: "Statuses", options: statuses.map((status) => ({ label: status.replaceAll("_", " "), value: status })) },
+              { key: "round", label: "Round", type: "text" },
+            ]}
+          />
         </CardHeader>
         <CardContent className="px-0">
-          {loading ? (
+          {loading || listQuery.isPending ? (
             <p className="p-6 text-sm text-muted-foreground">Loading fixtures...</p>
           ) : fixtures.length ? (
             <Table>
@@ -250,7 +282,9 @@ export function FixturesManager() {
               <TableBody>
                 {fixtures.map((item, index) => (
                   <TableRow key={item.id}>
-                    <TableCell className="pl-4 text-muted-foreground tabular-nums">{index + 1}</TableCell>
+                    <TableCell className="pl-4 text-muted-foreground tabular-nums">
+                      {(meta.page - 1) * meta.pageSize + index + 1}
+                    </TableCell>
                     <TableCell>
                       {tournaments.find((tournament) => tournament.id === item.tournament_id)?.name ?? "Unknown"}
                     </TableCell>
@@ -292,11 +326,14 @@ export function FixturesManager() {
                 <EmptyMedia variant="icon">
                   <CalendarDays />
                 </EmptyMedia>
-                <EmptyTitle>No fixtures yet</EmptyTitle>
-                <EmptyDescription>Create the first database fixture.</EmptyDescription>
+                <EmptyTitle>{listQuery.hasFilters ? "No fixtures match these filters" : "No fixtures yet"}</EmptyTitle>
+                <EmptyDescription>
+                  {listQuery.hasFilters ? "Clear or adjust the filters to see more records." : "Create the first database fixture."}
+                </EmptyDescription>
               </EmptyHeader>
             </Empty>
           )}
+          <AdminListPagination meta={meta} onPageChange={listQuery.setPage} />
         </CardContent>
       </Card>
       <Dialog open={open} onOpenChange={setOpen}>

@@ -24,6 +24,9 @@ import { Input } from "@/components/ui/input";
 import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { adminApi } from "@/lib/admin-api.client";
+import { type AdminListMeta, type AdminListPayload, normalizeAdminListPayload } from "@/lib/admin-list";
+import { AdminFilterBar, AdminListPagination } from "@/components/admin/admin-list-controls";
+import { useAdminListQuery } from "@/hooks/use-admin-list-query";
 
 const venueTypes: VenueType[] = ["FIELD", "COURT", "POOL", "HALL", "OTHER"];
 const venueSchema = z.object({
@@ -35,7 +38,9 @@ type VenueForm = z.infer<typeof venueSchema>;
 const emptyForm: VenueForm = { name: "", type: "FIELD", location: "" };
 
 export function VenuesManager() {
+  const listQuery = useAdminListQuery();
   const [venues, setVenues] = useState<VenueRecord[]>([]);
+  const [meta, setMeta] = useState<AdminListMeta>({ page: 1, pageSize: 20, total: 0, pageCount: 1 });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [open, setOpen] = useState(false);
@@ -44,11 +49,16 @@ export function VenuesManager() {
   const [errors, setErrors] = useState<Partial<Record<keyof VenueForm, string>>>({});
 
   useEffect(() => {
-    adminApi<VenueRecord[]>("venues")
-      .then(setVenues)
+    setLoading(true);
+    adminApi<AdminListPayload<VenueRecord>>(`venues?${listQuery.requestQuery}`)
+      .then((payload) => {
+        const response = normalizeAdminListPayload(payload);
+        setVenues(response.data);
+        setMeta(response.meta);
+      })
       .catch((error: Error) => toast.error(error.message))
       .finally(() => setLoading(false));
-  }, []);
+  }, [listQuery.requestQuery]);
 
   function startCreate() {
     setEditing(null);
@@ -106,9 +116,18 @@ export function VenuesManager() {
       <Card>
         <CardHeader className="border-b">
           <CardTitle>Venue records</CardTitle>
+          <AdminFilterBar
+            search={listQuery.search}
+            searchPlaceholder="Search venue name or location"
+            onSearchChange={listQuery.setSearch}
+            values={listQuery.values}
+            onFilterChange={listQuery.setFilter}
+            onClear={listQuery.clearFilters}
+            hasFilters={listQuery.hasFilters}
+          />
         </CardHeader>
         <CardContent className="px-0">
-          {loading ? (
+          {loading || listQuery.isPending ? (
             <p className="p-6 text-sm text-muted-foreground">Loading venues...</p>
           ) : venues.length ? (
             <Table>
@@ -124,7 +143,9 @@ export function VenuesManager() {
               <TableBody>
                 {venues.map((venue, index) => (
                   <TableRow key={venue.id}>
-                    <TableCell className="pl-4 text-muted-foreground tabular-nums">{index + 1}</TableCell>
+                    <TableCell className="pl-4 text-muted-foreground tabular-nums">
+                      {(meta.page - 1) * meta.pageSize + index + 1}
+                    </TableCell>
                     <TableCell className="font-medium">{venue.name}</TableCell>
                     <TableCell>
                       <Badge variant="outline">{venue.type.toLowerCase()}</Badge>
@@ -151,11 +172,14 @@ export function VenuesManager() {
                 <EmptyMedia variant="icon">
                   <MapPin />
                 </EmptyMedia>
-                <EmptyTitle>No venues yet</EmptyTitle>
-                <EmptyDescription>Create a venue before assigning it to fixtures.</EmptyDescription>
+                <EmptyTitle>{listQuery.hasFilters ? "No venues match this search" : "No venues yet"}</EmptyTitle>
+                <EmptyDescription>
+                  {listQuery.hasFilters ? "Clear the search to see all venues." : "Create a venue before assigning it to fixtures."}
+                </EmptyDescription>
               </EmptyHeader>
             </Empty>
           )}
+          <AdminListPagination meta={meta} onPageChange={listQuery.setPage} />
         </CardContent>
       </Card>
       <Dialog open={open} onOpenChange={setOpen}>

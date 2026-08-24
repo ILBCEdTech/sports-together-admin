@@ -35,7 +35,10 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { adminApi } from "@/lib/admin-api.client";
-import type { FixtureRecord, FixtureTeamRecord, ResultRecord, ResultStatus, TeamRecord } from "@/lib/admin-records";
+import { type AdminListMeta, type AdminListPayload, normalizeAdminListPayload } from "@/lib/admin-list";
+import type { FixtureRecord, FixtureTeamRecord, ResultRecord, ResultStatus, TeamRecord, TournamentRecord } from "@/lib/admin-records";
+import { AdminFilterBar, AdminListPagination } from "@/components/admin/admin-list-controls";
+import { useAdminListQuery } from "@/hooks/use-admin-list-query";
 
 type ResultForm = {
   fixture_id: number;
@@ -70,39 +73,52 @@ const emptyForm: ResultForm = {
 };
 
 export function ResultsManager() {
+  const listQuery = useAdminListQuery();
   const [results, setResults] = useState<ResultRecord[]>([]);
   const [fixtures, setFixtures] = useState<FixtureRecord[]>([]);
   const [fixtureTeams, setFixtureTeams] = useState<FixtureTeamRecord[]>([]);
   const [teams, setTeams] = useState<TeamRecord[]>([]);
   const [sports, setSports] = useState<SportLookup[]>([]);
+  const [tournaments, setTournaments] = useState<TournamentRecord[]>([]);
+  const [meta, setMeta] = useState<AdminListMeta>({ page: 1, pageSize: 20, total: 0, pageCount: 1 });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<ResultRecord | null>(null);
   const [deleting, setDeleting] = useState<ResultRecord | null>(null);
-  const [activeSportId, setActiveSportId] = useState("");
+  const activeSportId = listQuery.values.get("sportId") ?? "";
   const [form, setForm] = useState<ResultForm>(emptyForm);
   const [errors, setErrors] = useState<Partial<Record<keyof ResultForm, string>>>({});
 
   useEffect(() => {
     Promise.all([
-      adminApi<ResultRecord[]>("results"),
       adminApi<FixtureRecord[]>("fixtures"),
       adminApi<FixtureTeamRecord[]>("fixture-teams"),
       adminApi<TeamRecord[]>("teams"),
       adminApi<SportLookup[]>("sports"),
+      adminApi<TournamentRecord[]>("tournaments"),
     ])
-      .then(([resultRows, fixtureRows, fixtureTeamRows, teamRows, sportRows]) => {
-        setResults(resultRows);
+      .then(([fixtureRows, fixtureTeamRows, teamRows, sportRows, tournamentRows]) => {
         setFixtures(fixtureRows);
         setFixtureTeams(fixtureTeamRows);
         setTeams(teamRows);
         setSports(sportRows);
-        setActiveSportId((current) => current || String(sportRows[0]?.id ?? ""));
+        setTournaments(tournamentRows);
+      })
+      .catch((error: Error) => toast.error(error.message));
+  }, []);
+
+  useEffect(() => {
+    setLoading(true);
+    adminApi<AdminListPayload<ResultRecord>>(`results?${listQuery.requestQuery}`)
+      .then((payload) => {
+        const response = normalizeAdminListPayload(payload);
+        setResults(response.data);
+        setMeta(response.meta);
       })
       .catch((error: Error) => toast.error(error.message))
       .finally(() => setLoading(false));
-  }, []);
+  }, [listQuery.requestQuery]);
 
   const selectableFixtures = useMemo(
     () =>
@@ -113,14 +129,7 @@ export function ResultsManager() {
       ),
     [activeSportId, editing, fixtures, results],
   );
-  const filteredResults = useMemo(
-    () =>
-      results.filter((result) => {
-        const fixture = fixtures.find((item) => item.id === result.fixture_id);
-        return !activeSportId || fixture?.sport_id === Number(activeSportId);
-      }),
-    [activeSportId, fixtures, results],
-  );
+  const filteredResults = results;
   const selectedTeams = fixtureTeams.filter((link) => link.fixture_id === form.fixture_id);
 
   function fixtureLabel(fixtureId: number) {
@@ -226,8 +235,24 @@ export function ResultsManager() {
       <Card>
         <CardHeader className="gap-4 border-b">
           <CardTitle>Result records</CardTitle>
+          <AdminFilterBar
+            search={listQuery.search}
+            searchPlaceholder="Search team or match number"
+            onSearchChange={listQuery.setSearch}
+            values={listQuery.values}
+            onFilterChange={listQuery.setFilter}
+            onClear={listQuery.clearFilters}
+            hasFilters={listQuery.hasFilters}
+            fields={[
+              { key: "tournamentId", label: "Tournaments", options: tournaments.map((item) => ({ label: item.name, value: String(item.id) })) },
+              { key: "from", label: "From date", type: "date" },
+              { key: "to", label: "To date", type: "date" },
+              { key: "status", label: "Statuses", options: statuses.map((status) => ({ label: status, value: status })) },
+              { key: "round", label: "Round", type: "text" },
+            ]}
+          />
           {sports.length > 0 && (
-            <Tabs value={activeSportId} onValueChange={setActiveSportId} className="mx-auto w-full max-w-3xl">
+            <Tabs value={activeSportId} onValueChange={(value) => listQuery.setFilter("sportId", value)} className="mx-auto w-full max-w-3xl">
               <TabsList className="grid h-10 w-full grid-flow-col overflow-hidden">
                 {sports.map((sport) => (
                   <TabsTrigger
@@ -243,7 +268,7 @@ export function ResultsManager() {
           )}
         </CardHeader>
         <CardContent className="px-0">
-          {loading ? (
+          {loading || listQuery.isPending ? (
             <p className="p-6 text-sm text-muted-foreground">Loading results...</p>
           ) : filteredResults.length ? (
             <Table>
@@ -260,7 +285,9 @@ export function ResultsManager() {
               <TableBody>
                 {filteredResults.map((result, index) => (
                   <TableRow key={result.id}>
-                    <TableCell className="pl-4 text-muted-foreground tabular-nums">{index + 1}</TableCell>
+                    <TableCell className="pl-4 text-muted-foreground tabular-nums">
+                      {(meta.page - 1) * meta.pageSize + index + 1}
+                    </TableCell>
                     <TableCell className="font-medium">{fixtureLabel(result.fixture_id)}</TableCell>
                     <TableCell>
                       {result.team_a_score ?? "—"} – {result.team_b_score ?? "—"}
@@ -302,11 +329,14 @@ export function ResultsManager() {
                 <EmptyMedia variant="icon">
                   <Medal />
                 </EmptyMedia>
-                <EmptyTitle>No results for this sport</EmptyTitle>
-                <EmptyDescription>Create a result after a fixture in this sport has been played.</EmptyDescription>
+                <EmptyTitle>{listQuery.hasFilters ? "No results match these filters" : "No results for this sport"}</EmptyTitle>
+                <EmptyDescription>
+                  {listQuery.hasFilters ? "Clear or adjust the filters to see more records." : "Create a result after a fixture in this sport has been played."}
+                </EmptyDescription>
               </EmptyHeader>
             </Empty>
           )}
+          <AdminListPagination meta={meta} onPageChange={listQuery.setPage} />
         </CardContent>
       </Card>
 
