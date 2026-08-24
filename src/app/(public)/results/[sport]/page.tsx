@@ -5,8 +5,7 @@ import { notFound } from "next/navigation";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
 import { SportGallerySection } from "../_components/sport-gallery-section";
-import { SwimmingRankingTable } from "../_components/swimming-ranking-table";
-import { getRankingGroupsBySlug, getResultSports, getSportGalleries } from "../_lib/results-data";
+import { getResultSports, getSportGalleries, getSportResultsBySlug } from "../_lib/results-data";
 
 const sportHero: Record<string, string> = {
   badminton: "/images/badminton-results.png",
@@ -21,16 +20,11 @@ export default async function SportResultsPage({ params }: PageProps<"/results/[
   const { sport } = await params;
 
   try {
-    const [result, sports] = await Promise.all([getRankingGroupsBySlug(sport), getResultSports()]);
+    const [result, sports] = await Promise.all([getSportResultsBySlug(sport), getResultSports()]);
     if (!result) notFound();
 
-    const { sportId, sportName, groups } = result;
+    const { sportId, sportName, results } = result;
     const galleries = sportId ? await getSportGalleries(sportId).catch(() => []) : [];
-    const isSwimming = sportName.toLowerCase() === "swimming";
-    const swimmingTeams = groups
-      .flatMap((group) => group.teams)
-      .filter((team, index, teams) => teams.findIndex((candidate) => candidate.id === team.id) === index)
-      .map((team, index) => ({ ...team, ranking: index + 1 }));
     const hero = sportHero[sport];
 
     return (
@@ -70,39 +64,48 @@ export default async function SportResultsPage({ params }: PageProps<"/results/[
         </nav>
 
         <div className="mx-auto mt-12 max-w-7xl px-4 sm:px-6 lg:px-8">
-          {isSwimming && swimmingTeams.length > 0 ? (
-            <SwimmingRankingTable teams={swimmingTeams} />
-          ) : groups.length > 0 ? (
-            <div className="space-y-14">
-              {groups.map((group) => {
-                const headingId = `ranking-${group.title.toLowerCase().replaceAll(" ", "-")}`;
-                return (
-                  <section key={group.title} aria-labelledby={headingId}>
-                    <h2 id={headingId} className="mb-6 font-serif font-bold text-3xl text-slate-800 tracking-tight sm:text-5xl">
-                      {group.title}
-                    </h2>
-                    <Table className="bg-white text-base sm:text-lg">
-                      <TableHeader className="bg-sky-100">
-                        <TableRow className="hover:bg-sky-100">
-                          <TableHead className="h-14 px-3 font-black text-slate-950 sm:px-5">Ranking</TableHead>
-                          <TableHead className="h-14 px-3 font-black text-slate-950 sm:px-5">Team</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {group.teams.map((team, index) => (
-                          <TableRow key={team.id} className="odd:bg-white even:bg-slate-50 hover:bg-slate-100">
-                            <TableCell className="h-14 px-3 sm:px-5">{index + 1}</TableCell>
-                            <TableCell className="h-14 px-3 font-medium sm:px-5">{team.name}</TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </section>
-                );
-              })}
-            </div>
+          {results.length > 0 ? (
+            <section aria-labelledby="sport-results-heading">
+              <h2 id="sport-results-heading" className="mb-6 font-serif font-bold text-3xl text-slate-800 tracking-tight sm:text-5xl">
+                Results
+              </h2>
+              <Table className="bg-white text-base">
+                <TableHeader className="bg-sky-100">
+                  <TableRow className="hover:bg-sky-100">
+                    <TableHead className="h-14 px-3 font-black text-slate-950 sm:px-5">Match</TableHead>
+                    <TableHead className="h-14 px-3 font-black text-slate-950 sm:px-5">Date</TableHead>
+                    <TableHead className="h-14 px-3 font-black text-slate-950 sm:px-5">Round</TableHead>
+                    <TableHead className="h-14 px-3 font-black text-slate-950 sm:px-5">Teams</TableHead>
+                    <TableHead className="h-14 px-3 text-center font-black text-slate-950 sm:px-5">Score</TableHead>
+                    <TableHead className="h-14 px-3 font-black text-slate-950 sm:px-5">Winner</TableHead>
+                    <TableHead className="h-14 px-3 font-black text-slate-950 sm:px-5">Status</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {results.map((item) => (
+                    <TableRow key={item.id} className="odd:bg-white even:bg-slate-50 hover:bg-slate-100">
+                      <TableCell className="h-16 px-3 font-semibold sm:px-5">{item.matchNumber}</TableCell>
+                      <TableCell className="h-16 px-3 sm:px-5">
+                        {new Intl.DateTimeFormat("en-GB", { dateStyle: "medium" }).format(new Date(item.startAt))}
+                      </TableCell>
+                      <TableCell className="h-16 px-3 sm:px-5">{item.round || "—"}</TableCell>
+                      <TableCell className="h-16 px-3 font-medium sm:px-5">
+                        {item.homeTeam} vs {item.awayTeam}
+                      </TableCell>
+                      <TableCell className="h-16 px-3 text-center font-bold sm:px-5">
+                        {item.homeScore ?? "—"} – {item.awayScore ?? "—"}
+                      </TableCell>
+                      <TableCell className="h-16 px-3 sm:px-5">{item.winner || "—"}</TableCell>
+                      <TableCell className="h-16 px-3 sm:px-5">
+                        {item.status === "FINAL" ? "Final" : "Pending"}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </section>
           ) : (
-            <p className="text-slate-600">No teams are available for this sport yet.</p>
+            <p className="text-slate-600">No results are available for this sport yet.</p>
           )}
           <SportGallerySection galleries={galleries} sportName={sportName} />
         </div>

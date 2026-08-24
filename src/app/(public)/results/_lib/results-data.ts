@@ -2,18 +2,26 @@ import { z } from "zod";
 
 const sportSchema = z.object({ id: z.number().int(), name: z.string() });
 const teamSchema = z.object({ id: z.number().int(), name: z.string(), sport_id: z.number().int() });
-const fixtureSchema = z.object({ id: z.number().int(), sport_id: z.number().int(), round: z.string().nullable() });
+const fixtureSchema = z.object({
+  id: z.number().int(),
+  sport_id: z.number().int(),
+  match_number: z.string().nullable(),
+  round: z.string().nullable(),
+  start_at: z.string(),
+});
 const fixtureTeamSchema = z.object({
   fixture_id: z.number().int(),
   team_id: z.number().int(),
   side: z.enum(["HOME", "AWAY"]),
 });
 const resultSchema = z.object({
+  id: z.number().int(),
   fixture_id: z.number().int(),
   winner_team_id: z.number().int().nullable(),
   team_a_score: z.number().nullable(),
   team_b_score: z.number().nullable(),
   status: z.enum(["PENDING", "FINAL"]),
+  remark: z.string().nullable(),
 });
 const galleryImageSchema = z.object({
   id: z.number().int(),
@@ -30,10 +38,7 @@ const sportGallerySchema = z.object({
   images: z.array(galleryImageSchema),
 });
 
-type Team = z.infer<typeof teamSchema>;
-type Fixture = z.infer<typeof fixtureSchema>;
 type FixtureTeam = z.infer<typeof fixtureTeamSchema>;
-type Result = z.infer<typeof resultSchema>;
 
 async function getResource<T>(path: string, schema: z.ZodType<T>): Promise<T> {
   const baseUrl = (process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:5000").replace(/\/$/, "");
@@ -42,7 +47,19 @@ async function getResource<T>(path: string, schema: z.ZodType<T>): Promise<T> {
   return schema.parse(await response.json());
 }
 
-export type RankingGroup = { title: string; teams: Array<{ id: number; name: string }> };
+export type PublicResult = {
+  id: number;
+  matchNumber: string;
+  round: string | null;
+  startAt: string;
+  homeTeam: string;
+  awayTeam: string;
+  homeScore: number | null;
+  awayScore: number | null;
+  winner: string | null;
+  status: "PENDING" | "FINAL";
+  remark: string | null;
+};
 export type SportGallery = z.infer<typeof sportGallerySchema>;
 
 export function sportSlug(name: string) {
@@ -58,40 +75,7 @@ export async function getResultSports() {
   return sports.map((sport) => ({ ...sport, slug: sportSlug(sport.name) }));
 }
 
-function rankTeams(teams: Team[], fixtures: Fixture[], fixtureTeams: FixtureTeam[], results: Result[]) {
-  const finalResults = new Map(
-    results.filter((result) => result.status === "FINAL").map((result) => [result.fixture_id, result]),
-  );
-  const records = new Map(teams.map((team) => [team.id, { team, wins: 0, pointDifference: 0 }]));
-
-  for (const fixture of fixtures) {
-    const result = finalResults.get(fixture.id);
-    if (!result) continue;
-    const links = fixtureTeams.filter((link) => link.fixture_id === fixture.id);
-    const home = links.find((link) => link.side === "HOME");
-    const away = links.find((link) => link.side === "AWAY");
-    if (!home || !away) continue;
-    const homeRecord = records.get(home.team_id);
-    const awayRecord = records.get(away.team_id);
-    const homeScore = result.team_a_score ?? 0;
-    const awayScore = result.team_b_score ?? 0;
-    if (homeRecord) homeRecord.pointDifference += homeScore - awayScore;
-    if (awayRecord) awayRecord.pointDifference += awayScore - homeScore;
-    const winner = result.winner_team_id ? records.get(result.winner_team_id) : undefined;
-    if (winner) winner.wins += 1;
-  }
-
-  return [...records.values()]
-    .sort(
-      (left, right) =>
-        right.wins - left.wins ||
-        right.pointDifference - left.pointDifference ||
-        left.team.name.localeCompare(right.team.name),
-    )
-    .map(({ team }) => ({ id: team.id, name: team.name }));
-}
-
-export async function getRankingGroups(requestedSportId?: number) {
+export async function getSportResults(requestedSportId?: number) {
   const [sports, teams, fixtures, fixtureTeams, results] = await Promise.all([
     getResource("sports", z.array(sportSchema)),
     getResource("teams", z.array(teamSchema)),
@@ -104,36 +88,51 @@ export async function getRankingGroups(requestedSportId?: number) {
     sports.find((item) => item.id === requestedSportId) ??
     sports.find((item) => item.name.toLowerCase() === "basketball") ??
     sports[0];
-  if (!sport) return { sportId: null, sportName: "Basketball", groups: [] as RankingGroup[] };
+  if (!sport) return { sportId: null, sportName: "Basketball", results: [] as PublicResult[] };
 
-  const sportTeams = teams.filter((team) => team.sport_id === sport.id);
+  const teamsById = new Map(teams.map((team) => [team.id, team]));
   const sportFixtures = fixtures.filter((fixture) => fixture.sport_id === sport.id);
-  const divisions = [...new Set(sportFixtures.map((fixture) => fixture.round?.trim() || "Division 1"))];
-  if (divisions.length === 0) divisions.push("Division 1");
+  const fixturesById = new Map(sportFixtures.map((fixture) => [fixture.id, fixture]));
+  const linksByFixture = new Map<number, FixtureTeam[]>();
+  for (const link of fixtureTeams) {
+    const links = linksByFixture.get(link.fixture_id) ?? [];
+    links.push(link);
+    linksByFixture.set(link.fixture_id, links);
+  }
 
-  const groups = divisions.map((division) => {
-    const divisionFixtures = sportFixtures.filter((fixture) => (fixture.round?.trim() || "Division 1") === division);
-    const fixtureIds = new Set(divisionFixtures.map((fixture) => fixture.id));
-    const teamIds = new Set(
-      fixtureTeams.filter((link) => fixtureIds.has(link.fixture_id)).map((link) => link.team_id),
-    );
-    const divisionTeams = teamIds.size > 0 ? sportTeams.filter((team) => teamIds.has(team.id)) : sportTeams;
-    return {
-      title: division.toLowerCase().includes(sport.name.toLowerCase()) ? division : `Boys ${sport.name} ${division}`,
-      teams: rankTeams(divisionTeams, divisionFixtures, fixtureTeams, results),
-    };
-  });
+  const sportResults = results
+    .filter((result) => fixturesById.has(result.fixture_id))
+    .map((result) => {
+      const fixture = fixturesById.get(result.fixture_id)!;
+      const links = linksByFixture.get(fixture.id) ?? [];
+      const home = links.find((link) => link.side === "HOME");
+      const away = links.find((link) => link.side === "AWAY");
+      return {
+        id: result.id,
+        matchNumber: fixture.match_number?.trim() || "—",
+        round: fixture.round,
+        startAt: fixture.start_at,
+        homeTeam: home ? (teamsById.get(home.team_id)?.name ?? "Unknown team") : "Unknown team",
+        awayTeam: away ? (teamsById.get(away.team_id)?.name ?? "Unknown team") : "Unknown team",
+        homeScore: result.team_a_score,
+        awayScore: result.team_b_score,
+        winner: result.winner_team_id ? (teamsById.get(result.winner_team_id)?.name ?? null) : null,
+        status: result.status,
+        remark: result.remark,
+      } satisfies PublicResult;
+    })
+    .sort((left, right) => Date.parse(right.startAt) - Date.parse(left.startAt));
 
-  return { sportId: sport.id, sportName: sport.name, groups };
+  return { sportId: sport.id, sportName: sport.name, results: sportResults };
 }
 
 export function getSportGalleries(sportId: number) {
   return getResource(`sport-galleries?sportId=${sportId}`, z.array(sportGallerySchema));
 }
 
-export async function getRankingGroupsBySlug(slug: string) {
+export async function getSportResultsBySlug(slug: string) {
   const sports = await getResource("sports", z.array(sportSchema));
   const sport = sports.find((item) => sportSlug(item.name) === slug);
   if (!sport) return null;
-  return getRankingGroups(sport.id);
+  return getSportResults(sport.id);
 }
