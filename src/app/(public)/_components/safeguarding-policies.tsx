@@ -37,6 +37,11 @@ const policies = [
     file: "Sports Together (2026-2027) Swimming Rules and Regulations.pdf",
     accent: "bg-sky-600",
   },
+  {
+    sport: "Student Code of Conduct and Trip",
+    file: "Student Code of Conduct and Trip.pdf",
+    accent: "bg-sky-600",
+  },
 ] as const;
 
 const evacuationPlans = [
