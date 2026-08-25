@@ -17,8 +17,7 @@ const documents = [
     title: "Check List",
     description: "View the preparation and packing checklist before departure.",
     files: [
-      { label: "Accessories Check List 1", name: "Accessories Checklist for Sport Together at Mandalay.pdf" },
-      { label: "Accessories Check List 2", name: "Accessories Checklist for Sport Together at Mandalay (1).pdf" },
+      { label: "Accessories Check List", name: "Accessories Checklist for Sport Together at Mandalay.pdf" },
     ],
     icon: ClipboardCheck,
   },
