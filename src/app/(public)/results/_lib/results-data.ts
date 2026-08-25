@@ -5,9 +5,9 @@ const teamSchema = z.object({ id: z.number().int(), name: z.string(), sport_id: 
 const fixtureSchema = z.object({
   id: z.number().int(),
   sport_id: z.number().int(),
-  match_number: z.string().nullable(),
   round: z.string().nullable(),
   start_at: z.string(),
+  end_at: z.string().nullable(),
 });
 const fixtureTeamSchema = z.object({
   fixture_id: z.number().int(),
@@ -23,21 +23,6 @@ const resultSchema = z.object({
   status: z.enum(["PENDING", "FINAL"]),
   remark: z.string().nullable(),
 });
-const galleryImageSchema = z.object({
-  id: z.number().int(),
-  image_url: z.string().url(),
-  presigned_url: z.string().url().nullable().optional(),
-  alt_text: z.string().nullable(),
-  sort_order: z.number().int(),
-});
-const sportGallerySchema = z.object({
-  id: z.number().int(),
-  sport_id: z.number().int(),
-  title: z.string(),
-  description: z.string().nullable(),
-  images: z.array(galleryImageSchema),
-});
-
 type FixtureTeam = z.infer<typeof fixtureTeamSchema>;
 
 async function getResource<T>(path: string, schema: z.ZodType<T>): Promise<T> {
@@ -49,9 +34,9 @@ async function getResource<T>(path: string, schema: z.ZodType<T>): Promise<T> {
 
 export type PublicResult = {
   id: number;
-  matchNumber: string;
   round: string | null;
   startAt: string;
+  endAt: string | null;
   homeTeam: string;
   awayTeam: string;
   homeScore: number | null;
@@ -60,7 +45,6 @@ export type PublicResult = {
   status: "PENDING" | "FINAL";
   remark: string | null;
 };
-export type SportGallery = z.infer<typeof sportGallerySchema>;
 
 export function sportSlug(name: string) {
   return name
@@ -109,9 +93,9 @@ export async function getSportResults(requestedSportId?: number) {
       const away = links.find((link) => link.side === "AWAY");
       return {
         id: result.id,
-        matchNumber: fixture.match_number?.trim() || "—",
         round: fixture.round,
         startAt: fixture.start_at,
+        endAt: fixture.end_at,
         homeTeam: home ? (teamsById.get(home.team_id)?.name ?? "Unknown team") : "Unknown team",
         awayTeam: away ? (teamsById.get(away.team_id)?.name ?? "Unknown team") : "Unknown team",
         homeScore: result.team_a_score,
@@ -120,14 +104,9 @@ export async function getSportResults(requestedSportId?: number) {
         status: result.status,
         remark: result.remark,
       } satisfies PublicResult;
-    })
-    .sort((left, right) => Date.parse(right.startAt) - Date.parse(left.startAt));
+    });
 
   return { sportId: sport.id, sportName: sport.name, results: sportResults };
-}
-
-export function getSportGalleries(sportId: number) {
-  return getResource(`sport-galleries?sportId=${sportId}`, z.array(sportGallerySchema));
 }
 
 export async function getSportResultsBySlug(slug: string) {

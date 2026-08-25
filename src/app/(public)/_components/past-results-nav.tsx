@@ -1,7 +1,6 @@
-import Link from "next/link";
-
 import { getPublicSports } from "../_lib/sports";
 import { sportSlug } from "../results/_lib/results-data";
+import { ActiveNavLink } from "./active-nav-link";
 import { PastResultsMenu } from "./past-results-menu";
 
 export async function PastResultsNav() {
@@ -17,12 +16,5 @@ export async function PastResultsNav() {
     // Keep navigation available when the public sports API cannot be reached.
   }
 
-  return (
-    <Link
-      href="/results"
-      className="font-bold text-sky-600 text-xs uppercase tracking-[0.14em] hover:text-sky-800"
-    >
-      Past Results
-    </Link>
-  );
+  return <ActiveNavLink label="Results" href="/results" />;
 }
