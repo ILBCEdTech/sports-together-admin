@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import type { Fixture, SportFixture } from "@/lib/fixture-data";
+import { fixtureFallbacks } from "@/lib/fixture-fallback-data";
 import { getPublicSportEventDetails } from "@/lib/public-sport-event-details";
 import { getPublicSportSchedule } from "@/lib/public-sport-schedule";
 import { getPublicSportStaff } from "@/lib/public-sport-staff";
@@ -168,7 +169,7 @@ export async function SportPage({ sport }: { sport: SportFixture }) {
     getPublicSportEventDetails(sport.name),
     getPublicSportSchedule(sport.name),
   ]);
-  const scheduleFixtures = backendFixtures;
+  const scheduleFixtures = backendFixtures.length > 0 ? backendFixtures : (fixtureFallbacks[sport.slug] ?? []);
   const eventDate = eventDetails ? new Date(eventDetails.date) : null;
   const dateLabel = eventDate
     ? `${eventDate.toLocaleDateString("en-GB", { day: "numeric", month: "numeric", year: "numeric", timeZone: "Asia/Yangon" }).replaceAll("/", ".")} (${eventDate.toLocaleDateString("en-US", { weekday: "long", timeZone: "Asia/Yangon" })})`
