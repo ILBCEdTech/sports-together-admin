@@ -6,7 +6,7 @@ import { siFacebook, siInstagram, siX, type SimpleIcon } from "simple-icons";
 import logo from "../../../logo.png";
 import { PastResultsNav } from "./_components/past-results-nav";
 
-const links = [["About", "/#about"], ["Tournaments", "/#tournaments"], ["Results", "/results"], ["Partners", "/#partners"], ["Safeguarding", "/#safeguarding"]] as const;
+const links = [["About", "/#about"], ["Tournaments", "/#tournaments"], ["Results", "/results"], ["School Life", "/school-life"], ["Partners", "/#partners"], ["Safeguarding", "/#safeguarding"]] as const;
 
 function Brand({ inverted = false }: { inverted?: boolean }) {
   return (
