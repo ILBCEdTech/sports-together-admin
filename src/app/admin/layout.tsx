@@ -12,6 +12,7 @@ import {
   MapPin,
   Medal,
   Trophy,
+  UserCog,
   UserRound,
   UsersRound,
 } from "lucide-react";
@@ -26,6 +27,7 @@ const links = [
   ["Tournaments", "/admin/tournaments", CalendarRange],
   ["Teams", "/admin/teams", UsersRound],
   ["Players", "/admin/players", UserRound],
+  ["Sport Staff", "/admin/sport-staff", UserCog],
   ["Fixtures", "/admin/fixtures", CalendarDays],
   ["Venues", "/admin/venues", MapPin],
   ["Results", "/admin/results", Medal],

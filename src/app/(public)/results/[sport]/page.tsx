@@ -4,8 +4,7 @@ import { notFound } from "next/navigation";
 
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
-import { SportGallerySection } from "../_components/sport-gallery-section";
-import { getResultSports, getSportGalleries, getSportResultsBySlug } from "../_lib/results-data";
+import { getResultSports, getSportResultsBySlug } from "../_lib/results-data";
 
 const sportHero: Record<string, string> = {
   badminton: "/images/badminton-results.png",
@@ -16,6 +15,23 @@ const sportHero: Record<string, string> = {
   volleyball: "/images/volleyball-results.png",
 };
 
+const resultDateFormatter = new Intl.DateTimeFormat("en-GB", {
+  dateStyle: "medium",
+  timeZone: "Asia/Yangon",
+});
+const resultTimeFormatter = new Intl.DateTimeFormat("en-US", {
+  hour: "numeric",
+  minute: "2-digit",
+  timeZone: "Asia/Yangon",
+});
+
+function resultDateAndTime(startAt: string, endAt: string | null) {
+  const start = new Date(startAt);
+  const date = resultDateFormatter.format(start);
+  const startTime = resultTimeFormatter.format(start);
+  return `${date} · ${startTime}${endAt ? ` – ${resultTimeFormatter.format(new Date(endAt))}` : ""}`;
+}
+
 export default async function SportResultsPage({ params }: PageProps<"/results/[sport]">) {
   const { sport } = await params;
 
@@ -23,8 +39,7 @@ export default async function SportResultsPage({ params }: PageProps<"/results/[
     const [result, sports] = await Promise.all([getSportResultsBySlug(sport), getResultSports()]);
     if (!result) notFound();
 
-    const { sportId, sportName, results } = result;
-    const galleries = sportId ? await getSportGalleries(sportId).catch(() => []) : [];
+    const { sportName, results } = result;
     const hero = sportHero[sport];
 
     return (
@@ -82,11 +97,11 @@ export default async function SportResultsPage({ params }: PageProps<"/results/[
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {results.map((item) => (
+                  {results.map((item, index) => (
                     <TableRow key={item.id} className="odd:bg-white even:bg-slate-50 hover:bg-slate-100">
-                      <TableCell className="h-16 px-3 font-semibold sm:px-5">{item.matchNumber}</TableCell>
-                      <TableCell className="h-16 px-3 sm:px-5">
-                        {new Intl.DateTimeFormat("en-GB", { dateStyle: "medium" }).format(new Date(item.startAt))}
+                      <TableCell className="h-16 px-3 font-semibold sm:px-5">Match {index + 1}</TableCell>
+                      <TableCell className="h-16 whitespace-nowrap px-3 sm:px-5">
+                        {resultDateAndTime(item.startAt, item.endAt)}
                       </TableCell>
                       <TableCell className="h-16 px-3 sm:px-5">{item.round || "—"}</TableCell>
                       <TableCell className="h-16 px-3 font-medium sm:px-5">
@@ -107,7 +122,6 @@ export default async function SportResultsPage({ params }: PageProps<"/results/[
           ) : (
             <p className="text-slate-600">No results are available for this sport yet.</p>
           )}
-          <SportGallerySection galleries={galleries} sportName={sportName} />
         </div>
       </main>
     );

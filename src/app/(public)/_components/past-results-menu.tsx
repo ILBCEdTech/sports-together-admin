@@ -24,7 +24,7 @@ export function PastResultsMenu({ sports }: { sports: ResultSport[] }) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger className={`group flex items-center gap-2 font-bold text-xs uppercase tracking-[0.14em] outline-none hover:text-sky-900 focus-visible:ring-2 focus-visible:ring-sky-700 focus-visible:ring-offset-4 ${active ? "text-sky-700" : "text-slate-500"}`}>
-        Past Results
+        Results
         <ChevronDown className="size-4 transition-transform group-data-[state=open]:rotate-180" aria-hidden="true" />
       </DropdownMenuTrigger>
       <DropdownMenuContent

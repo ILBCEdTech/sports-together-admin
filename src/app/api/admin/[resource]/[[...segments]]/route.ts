@@ -3,6 +3,8 @@ import { cookies } from "next/headers";
 
 const allowedResources = new Set([
   "badminton-courts",
+  "coaches",
+  "commissioners",
   "fixture-players",
   "fixture-teams",
   "fixtures",

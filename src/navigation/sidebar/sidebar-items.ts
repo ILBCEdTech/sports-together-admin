@@ -7,6 +7,7 @@ import {
   MapPin,
   Medal,
   Trophy,
+  UserCog,
   UserRound,
   UsersRound,
 } from "lucide-react";
@@ -48,6 +49,7 @@ export const sidebarItems: NavGroup[] = [
       { id: "tournaments", title: "Tournaments", url: "/admin/tournaments", icon: CalendarRange },
       { id: "teams", title: "Teams", url: "/admin/teams", icon: UsersRound },
       { id: "players", title: "Players", url: "/admin/players", icon: UserRound },
+      { id: "sport-staff", title: "Sport Staff", url: "/admin/sport-staff", icon: UserCog },
       { id: "fixtures", title: "Fixtures", url: "/admin/fixtures", icon: CalendarDays },
       { id: "venues", title: "Venues", url: "/admin/venues", icon: MapPin },
       { id: "results", title: "Results", url: "/admin/results", icon: Medal },
