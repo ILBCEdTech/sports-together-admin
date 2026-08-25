@@ -38,9 +38,14 @@ const policies = [
     accent: "bg-sky-600",
   },
   {
+    sport: "Volleyball",
+    file: "Sports Together (2026-2027) Volleyball Rules and Regulations.pdf",
+    accent: "bg-yellow-600",
+  },
+  {
     sport: "Student Code of Conduct and Trip",
     file: "Student Code of Conduct and Trip.pdf",
-    accent: "bg-sky-600",
+    accent: "bg-emerald-600",
   },
 ] as const;
 
