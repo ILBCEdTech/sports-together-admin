@@ -6,6 +6,8 @@ export type Fixture = {
   home?: string;
   away?: string;
   activity?: string;
+  startAt?: string;
+  endAt?: string;
 };
 
 export type SportFixture = {
@@ -14,6 +16,7 @@ export type SportFixture = {
   description: string;
   venueLabel: string;
   fixtures: Fixture[];
+  lunchTime?: string;
   equipment?: string[];
   officials: string[];
   notes?: string[];
@@ -36,7 +39,7 @@ const footballRounds = [
 
 const footballFixtures: Fixture[] = footballRounds.flatMap((round, index) => [
   {
-    match: `Match ${index + 1}`,
+    match: index < 4 ? "Match 1" : index < 8 ? "Match 2" : "Match 3",
     time: round[0],
     division: round[1],
     venue: "Field 1",
@@ -44,7 +47,7 @@ const footballFixtures: Fixture[] = footballRounds.flatMap((round, index) => [
     away: round[3],
   },
   {
-    match: `Match ${index + 1}`,
+    match: index < 4 ? "Match 1" : index < 8 ? "Match 2" : "Match 3",
     time: round[0],
     division: round[1],
     venue: "Field 2",
@@ -53,14 +56,24 @@ const footballFixtures: Fixture[] = footballRounds.flatMap((round, index) => [
   },
 ]);
 
-footballFixtures.push({
-  match: "Final",
-  time: "6:00-6:40 PM",
-  division: "Female Sr / Male Sr",
-  venue: "Field 1",
-  home: "Group winner",
-  away: "Group runner-up",
-});
+footballFixtures.push(
+  {
+    match: "Final",
+    time: "5:30-6:30 PM",
+    division: "Male Sr",
+    venue: "Field 1",
+    home: "Group Winner",
+    away: "Group Winner",
+  },
+  {
+    match: "Final",
+    time: "5:30-6:30 PM",
+    division: "Female Sr",
+    venue: "Field 2",
+    home: "Group Winner",
+    away: "Group Winner",
+  },
+);
 
 const volleyballFixtures: Fixture[] = [
   ["Match 1", "8:00-8:45 AM", "Male", "Team I", "Team L"],
@@ -240,6 +253,7 @@ export const sports: SportFixture[] = [
     description: "Two-field schedule across junior and senior male and female divisions.",
     venueLabel: "2 fields",
     fixtures: footballFixtures,
+    lunchTime: "12:00-1:00 PM",
     equipment: ["8 soccer balls", "2 scoreboards", "2 pairs of goal nets"],
     officials: [
       "Match Commissioner: Vladislav Bogushev / Yangon AD",
