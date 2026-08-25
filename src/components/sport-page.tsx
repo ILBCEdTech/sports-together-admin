@@ -20,6 +20,23 @@ function teamColor(team: string) {
   return teamColors[team] ?? "bg-amber-300 text-slate-950";
 }
 
+function FixturePlayers({ players }: { players?: string[] }) {
+  if (!players?.length) return null;
+
+  return (
+    <div className="mt-2 min-w-0 border-current/25 border-t pt-2">
+      <p className="font-bold text-[0.65rem] uppercase tracking-wider opacity-70">Players</p>
+      <ul className="mt-1 grid min-w-0 gap-1 font-medium text-xs leading-4">
+        {players.map((player, index) => (
+          <li key={`${player}-${index}`} className="min-w-0 whitespace-normal break-words">
+            {player}
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
 function EventSchedule({
   fixtures,
   lunchTime,
@@ -96,11 +113,11 @@ function EventSchedule({
                   {teamSchedule && (
                     <>
                       <TableHead className="px-2 text-center font-bold text-slate-950">
-                        {showFixturePlayers ? "Team" : "Home"}
+                        {showFixturePlayers ? "Home team & players" : "Home"}
                       </TableHead>
                       <TableHead className="w-16 px-2 text-center font-bold text-slate-950">Score</TableHead>
                       <TableHead className="px-2 text-center font-bold text-slate-950">
-                        {showFixturePlayers ? "Team" : "Away"}
+                        {showFixturePlayers ? "Away team & players" : "Away"}
                       </TableHead>
                     </>
                   )}
@@ -122,24 +139,14 @@ function EventSchedule({
                     {!teamSchedule && <TableCell className="px-2 text-center">{fixture.activity}</TableCell>}
                     {showLevel && <TableCell className="px-2 text-center">{fixture.division}</TableCell>}
                     {teamSchedule && <>
-                      <TableCell className={`px-2 py-3 text-center font-semibold ${fixture.home ? teamColor(fixture.home) : "bg-slate-100"}`}>
+                      <TableCell className={`min-w-0 whitespace-normal px-2 py-3 text-center font-semibold ${fixture.home ? teamColor(fixture.home) : "bg-slate-100"}`}>
                         <span className="block">{fixture.home ?? "—"}</span>
-                        {showFixturePlayers &&
-                          fixture.homePlayers?.map((player, playerIndex) => (
-                            <span key={`${player}-${playerIndex}`} className="mt-1 block font-medium text-xs">
-                              {player}
-                            </span>
-                          ))}
+                        {showFixturePlayers && <FixturePlayers players={fixture.homePlayers} />}
                       </TableCell>
                       <TableCell className="bg-slate-100 px-2 text-center text-slate-400">—</TableCell>
-                      <TableCell className={`px-2 py-3 text-center font-semibold ${fixture.away ? teamColor(fixture.away) : "bg-slate-100"}`}>
+                      <TableCell className={`min-w-0 whitespace-normal px-2 py-3 text-center font-semibold ${fixture.away ? teamColor(fixture.away) : "bg-slate-100"}`}>
                         <span className="block">{fixture.away ?? "—"}</span>
-                        {showFixturePlayers &&
-                          fixture.awayPlayers?.map((player, playerIndex) => (
-                            <span key={`${player}-${playerIndex}`} className="mt-1 block font-medium text-xs">
-                              {player}
-                            </span>
-                          ))}
+                        {showFixturePlayers && <FixturePlayers players={fixture.awayPlayers} />}
                       </TableCell>
                     </>}
                   </TableRow>
@@ -161,7 +168,7 @@ export async function SportPage({ sport }: { sport: SportFixture }) {
     getPublicSportEventDetails(sport.name),
     getPublicSportSchedule(sport.name),
   ]);
-  const scheduleFixtures = backendFixtures.length > 0 ? backendFixtures : sport.fixtures;
+  const scheduleFixtures = backendFixtures;
   const eventDate = eventDetails ? new Date(eventDetails.date) : null;
   const dateLabel = eventDate
     ? `${eventDate.toLocaleDateString("en-GB", { day: "numeric", month: "numeric", year: "numeric", timeZone: "Asia/Yangon" }).replaceAll("/", ".")} (${eventDate.toLocaleDateString("en-US", { weekday: "long", timeZone: "Asia/Yangon" })})`
@@ -186,7 +193,7 @@ export async function SportPage({ sport }: { sport: SportFixture }) {
             <div className="flex flex-wrap gap-3">
               <div className="flex min-h-16 items-center gap-3 border border-white/20 bg-white/10 px-4 backdrop-blur-sm">
                 <CalendarDays className="size-5 text-amber-300" aria-hidden="true" />
-                <div><span className="block font-bold text-xl">{sport.fixtures.length}</span><span className="text-sky-200 text-xs uppercase tracking-wider">Scheduled entries</span></div>
+                <div><span className="block font-bold text-xl">{scheduleFixtures.length}</span><span className="text-sky-200 text-xs uppercase tracking-wider">Scheduled entries</span></div>
               </div>
               <div className="flex min-h-16 items-center gap-3 border border-white/20 bg-white/10 px-4 backdrop-blur-sm">
                 <MapPin className="size-5 text-amber-300" aria-hidden="true" />
@@ -205,13 +212,19 @@ export async function SportPage({ sport }: { sport: SportFixture }) {
           </div>}
           <h2 className="font-serif font-bold text-3xl text-sky-950">Event schedule</h2>
           <div className="mt-6">
-            <EventSchedule
-              fixtures={scheduleFixtures}
-              lunchTime={backendFixtures.length > 0 ? undefined : sport.lunchTime}
-              renumberMatches={sport.slug === "volleyball"}
-              groupBySession={sport.slug === "basketball"}
-              showFixturePlayers={sport.slug === "badminton"}
-            />
+            {scheduleFixtures.length > 0 ? (
+              <EventSchedule
+                fixtures={scheduleFixtures}
+                lunchTime={backendFixtures.length > 0 ? undefined : sport.lunchTime}
+                renumberMatches={sport.slug === "volleyball"}
+                groupBySession={sport.slug === "basketball"}
+                showFixturePlayers={sport.slug === "badminton"}
+              />
+            ) : (
+              <div className="border border-slate-300 bg-white px-6 py-10 text-center text-slate-600">
+                No {sport.name} fixtures are currently available.
+              </div>
+            )}
           </div>
         </section>
 
