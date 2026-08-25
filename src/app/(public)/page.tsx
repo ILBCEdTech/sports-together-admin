@@ -52,7 +52,7 @@ export default function HomePage() {
       ========================================================== */}
       <section className="relative isolate min-h-[720px] overflow-hidden bg-sky-950 text-white">
         <Image
-          src="/images/reference-0.jpg"
+          src="/images/football.jpg"
           alt="ILBC student athletes gathered together"
           fill
           priority
