@@ -19,7 +19,7 @@ const scheduleSchema = z.array(z.object({
     players: z.array(z.object({
       team_id: z.number().int(),
       player: z.object({ id: z.number().int(), name: z.string() }),
-    })),
+    })).default([]),
   })),
 }));
 
