@@ -13,9 +13,9 @@ import { Separator } from "@/components/ui/separator";
 import { adminApi } from "@/lib/admin-api.client";
 import type {
   FixtureRecord,
+  FixturePlayerRecord,
   FixtureTeamRecord,
   PlayerRecord,
-  TeamPlayerRecord,
   TeamRecord,
   TournamentRecord,
   VenueRecord,
@@ -31,7 +31,7 @@ type DetailsData = {
   teams: TeamRecord[];
   players: PlayerRecord[];
   fixtureTeams: FixtureTeamRecord[];
-  teamPlayers: TeamPlayerRecord[];
+  fixturePlayers: FixturePlayerRecord[];
 };
 
 const dateTime = (value: string) =>
@@ -77,10 +77,10 @@ export function FixtureDetails({ fixtureId }: { fixtureId: string }) {
       adminApi<TeamRecord[]>("teams"),
       adminApi<PlayerRecord[]>("players"),
       adminApi<FixtureTeamRecord[]>("fixture-teams"),
-      adminApi<TeamPlayerRecord[]>("team-players"),
+      adminApi<FixturePlayerRecord[]>("fixture-players"),
     ])
-      .then(([fixture, tournaments, sports, venues, teams, players, fixtureTeams, teamPlayers]) =>
-        setData({ fixture, tournaments, sports, venues, teams, players, fixtureTeams, teamPlayers }),
+      .then(([fixture, tournaments, sports, venues, teams, players, fixtureTeams, fixturePlayers]) =>
+        setData({ fixture, tournaments, sports, venues, teams, players, fixtureTeams, fixturePlayers }),
       )
       .catch((requestError: Error) => {
         setError(requestError.message);
@@ -165,8 +165,8 @@ export function FixtureDetails({ fixtureId }: { fixtureId: string }) {
             <div className="grid gap-4 lg:grid-cols-2">
               {teamLinks.map((link) => {
                 const team = data.teams.find((item) => item.id === link.team_id);
-                const playerIds = data.teamPlayers
-                  .filter((item) => item.team_id === link.team_id)
+                const playerIds = data.fixturePlayers
+                  .filter((item) => item.fixture_id === fixture.id && item.team_id === link.team_id)
                   .map((item) => item.player_id);
                 const selectedPlayers = data.players.filter((player) => playerIds.includes(player.id));
                 return (

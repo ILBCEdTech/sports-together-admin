@@ -6,10 +6,10 @@ import { CalendarDays, Eye, Pencil, Plus } from "lucide-react";
 import { toast } from "sonner";
 import { z } from "zod";
 
-import type { FixtureRecord, FixtureStatus, FixtureTeamRecord, TeamRecord, VenueRecord } from "@/lib/admin-records";
 import { AdminFilterBar, AdminListPagination } from "@/components/admin/admin-list-controls";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Dialog,
   DialogContent,
@@ -25,6 +25,16 @@ import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { adminApi } from "@/lib/admin-api.client";
 import { type AdminListMeta, type AdminListPayload, normalizeAdminListPayload } from "@/lib/admin-list";
+import type {
+  FixturePlayerRecord,
+  FixtureRecord,
+  FixtureStatus,
+  FixtureTeamRecord,
+  PlayerRecord,
+  TeamPlayerRecord,
+  TeamRecord,
+  VenueRecord,
+} from "@/lib/admin-records";
 import { useAdminListQuery } from "@/hooks/use-admin-list-query";
 
 type Lookup = { id: number; name: string; code?: string | null };
@@ -38,6 +48,8 @@ type FixtureForm = {
   status: FixtureStatus;
   home_team_id: number;
   away_team_id: number;
+  home_player_ids: number[];
+  away_player_ids: number[];
 };
 
 const statuses = ["SCHEDULED", "IN_PROGRESS", "COMPLETED", "CANCELLED", "POSTPONED"] as const;
@@ -53,6 +65,11 @@ const usesTeamMatchup = (sport: Lookup | undefined) => {
   const name = sport?.name.trim().toLowerCase();
   const code = sport?.code?.trim().toLowerCase();
   return supportedSports.includes(name ?? "") || supportedSports.includes(code ?? "");
+};
+const isBadminton = (sport: Lookup | undefined) => {
+  const name = sport?.name.trim().toLowerCase();
+  const code = sport?.code?.trim().toLowerCase();
+  return name === "badminton" || code === "badminton";
 };
 const schema = z
   .object({
@@ -79,6 +96,8 @@ const emptyForm: FixtureForm = {
   status: "SCHEDULED",
   home_team_id: 0,
   away_team_id: 0,
+  home_player_ids: [],
+  away_player_ids: [],
 };
 
 const dateInput = (value: string | null) => value?.slice(0, 16) ?? "";
@@ -97,7 +116,10 @@ export function FixturesManager() {
   const [tournaments, setTournaments] = useState<Lookup[]>([]);
   const [venues, setVenues] = useState<VenueRecord[]>([]);
   const [teams, setTeams] = useState<TeamRecord[]>([]);
+  const [players, setPlayers] = useState<PlayerRecord[]>([]);
+  const [teamPlayers, setTeamPlayers] = useState<TeamPlayerRecord[]>([]);
   const [fixtureTeams, setFixtureTeams] = useState<FixtureTeamRecord[]>([]);
+  const [fixturePlayers, setFixturePlayers] = useState<FixturePlayerRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [open, setOpen] = useState(false);
@@ -108,6 +130,15 @@ export function FixturesManager() {
   const selectedSport = sports.find((sport) => sport.id === form.sport_id);
   const usesLevel = usesFixtureLevel(selectedSport);
   const usesTeams = usesTeamMatchup(selectedSport);
+  const usesBadmintonPlayers = isBadminton(selectedSport);
+  const homeRosterIds = new Set(
+    teamPlayers.filter((row) => row.team_id === form.home_team_id).map((row) => row.player_id),
+  );
+  const awayRosterIds = new Set(
+    teamPlayers.filter((row) => row.team_id === form.away_team_id).map((row) => row.player_id),
+  );
+  const homeRoster = players.filter((player) => homeRosterIds.has(player.id));
+  const awayRoster = players.filter((player) => awayRosterIds.has(player.id));
 
   useEffect(() => {
     Promise.all([
@@ -115,14 +146,20 @@ export function FixturesManager() {
       adminApi<Lookup[]>("tournaments"),
       adminApi<VenueRecord[]>("venues"),
       adminApi<TeamRecord[]>("teams"),
+      adminApi<PlayerRecord[]>("players"),
+      adminApi<TeamPlayerRecord[]>("team-players"),
       adminApi<FixtureTeamRecord[]>("fixture-teams"),
+      adminApi<FixturePlayerRecord[]>("fixture-players"),
     ])
-      .then(([sportRows, tournamentRows, venueRows, teamRows, teamLinks]) => {
+      .then(([sportRows, tournamentRows, venueRows, teamRows, playerRows, rosterRows, teamLinks, playerLinks]) => {
         setSports(sportRows);
         setTournaments(tournamentRows);
         setVenues(venueRows);
         setTeams(teamRows);
+        setPlayers(playerRows);
+        setTeamPlayers(rosterRows);
         setFixtureTeams(teamLinks);
+        setFixturePlayers(playerLinks);
       })
       .catch((error: Error) => toast.error(error.message));
   }, []);
@@ -150,6 +187,7 @@ export function FixturesManager() {
     const teamLinks = fixtureTeams.filter((row) => row.fixture_id === item.id);
     const homeTeamId = teamLinks.find((row) => row.side === "HOME")?.team_id ?? 0;
     const awayTeamId = teamLinks.find((row) => row.side === "AWAY")?.team_id ?? 0;
+    const playerLinks = fixturePlayers.filter((row) => row.fixture_id === item.id);
     setEditing(item);
     setForm({
       tournament_id: item.tournament_id,
@@ -161,6 +199,8 @@ export function FixturesManager() {
       status: item.status,
       home_team_id: homeTeamId,
       away_team_id: awayTeamId,
+      home_player_ids: playerLinks.filter((row) => row.team_id === homeTeamId).map((row) => row.player_id),
+      away_player_ids: playerLinks.filter((row) => row.team_id === awayTeamId).map((row) => row.player_id),
     });
     setErrors({});
     setOpen(true);
@@ -174,6 +214,14 @@ export function FixturesManager() {
     }
     if (usesTeams && (!form.home_team_id || !form.away_team_id || form.home_team_id === form.away_team_id)) {
       setErrors((current) => ({ ...current, home_team_id: "Choose two different teams." }));
+      return;
+    }
+    if (usesBadmintonPlayers && (form.home_player_ids.length !== 2 || form.away_player_ids.length !== 2)) {
+      setErrors((current) => ({
+        ...current,
+        home_player_ids: form.home_player_ids.length === 2 ? undefined : "Choose exactly two players.",
+        away_player_ids: form.away_player_ids.length === 2 ? undefined : "Choose exactly two players.",
+      }));
       return;
     }
     const result = schema.safeParse(form);
@@ -199,6 +247,8 @@ export function FixturesManager() {
       });
       if (usesTeams) await syncFixtureTeams(saved.id);
       else if (editing) await clearFixtureTeams(saved.id);
+      if (usesBadmintonPlayers) await syncFixturePlayers(saved.id);
+      else if (editing) await clearFixturePlayers(saved.id);
       setFixtures((current) =>
         editing ? current.map((item) => (item.id === saved.id ? saved : item)) : [...current, saved],
       );
@@ -227,6 +277,34 @@ export function FixturesManager() {
       oldTeams.map((row) => adminApi(`fixture-teams/${fixtureId}/${row.team_id}`, { method: "DELETE" })),
     );
     setFixtureTeams((current) => current.filter((row) => row.fixture_id !== fixtureId));
+  }
+
+  async function syncFixturePlayers(fixtureId: number) {
+    await clearFixturePlayers(fixtureId);
+    const newPlayers: FixturePlayerRecord[] = [
+      ...form.home_player_ids.map((playerId) => ({
+        fixture_id: fixtureId,
+        team_id: form.home_team_id,
+        player_id: playerId,
+      })),
+      ...form.away_player_ids.map((playerId) => ({
+        fixture_id: fixtureId,
+        team_id: form.away_team_id,
+        player_id: playerId,
+      })),
+    ];
+    await Promise.all(
+      newPlayers.map((row) => adminApi("fixture-players", { method: "POST", body: JSON.stringify(row) })),
+    );
+    setFixturePlayers((current) => [...current.filter((row) => row.fixture_id !== fixtureId), ...newPlayers]);
+  }
+
+  async function clearFixturePlayers(fixtureId: number) {
+    const oldPlayers = fixturePlayers.filter((row) => row.fixture_id === fixtureId);
+    await Promise.all(
+      oldPlayers.map((row) => adminApi(`fixture-players/${fixtureId}/${row.player_id}`, { method: "DELETE" })),
+    );
+    setFixturePlayers((current) => current.filter((row) => row.fixture_id !== fixtureId));
   }
 
   return (
@@ -373,6 +451,8 @@ export function FixturesManager() {
                         : "",
                     home_team_id: 0,
                     away_team_id: 0,
+                    home_player_ids: [],
+                    away_player_ids: [],
                   });
                   setErrors((current) => ({ ...current, sport_id: undefined, round: undefined }));
                 }}
@@ -421,8 +501,12 @@ export function FixturesManager() {
                     value={form.home_team_id}
                     options={teams.filter((team) => team.sport_id === form.sport_id)}
                     onChange={(value) => {
-                      setForm({ ...form, home_team_id: value });
-                      setErrors((current) => ({ ...current, home_team_id: undefined }));
+                      setForm({ ...form, home_team_id: value, home_player_ids: [] });
+                      setErrors((current) => ({
+                        ...current,
+                        home_team_id: undefined,
+                        home_player_ids: undefined,
+                      }));
                     }}
                     error={errors.home_team_id}
                   />
@@ -432,10 +516,38 @@ export function FixturesManager() {
                     value={form.away_team_id}
                     options={teams.filter((team) => team.sport_id === form.sport_id)}
                     onChange={(value) => {
-                      setForm({ ...form, away_team_id: value });
-                      setErrors((current) => ({ ...current, away_team_id: undefined }));
+                      setForm({ ...form, away_team_id: value, away_player_ids: [] });
+                      setErrors((current) => ({
+                        ...current,
+                        away_team_id: undefined,
+                        away_player_ids: undefined,
+                      }));
                     }}
                     error={errors.away_team_id}
+                  />
+                </>
+              )}
+              {usesBadmintonPlayers && (
+                <>
+                  <PlayerPicker
+                    label="First team players"
+                    players={homeRoster}
+                    selectedIds={form.home_player_ids}
+                    error={errors.home_player_ids}
+                    onChange={(homePlayerIds) => {
+                      setForm({ ...form, home_player_ids: homePlayerIds });
+                      setErrors((current) => ({ ...current, home_player_ids: undefined }));
+                    }}
+                  />
+                  <PlayerPicker
+                    label="Second team players"
+                    players={awayRoster}
+                    selectedIds={form.away_player_ids}
+                    error={errors.away_player_ids}
+                    onChange={(awayPlayerIds) => {
+                      setForm({ ...form, away_player_ids: awayPlayerIds });
+                      setErrors((current) => ({ ...current, away_player_ids: undefined }));
+                    }}
                   />
                 </>
               )}
@@ -503,6 +615,56 @@ export function FixturesManager() {
         </DialogContent>
       </Dialog>
     </div>
+  );
+}
+
+function PlayerPicker({
+  label,
+  players,
+  selectedIds,
+  onChange,
+  error,
+}: {
+  label: string;
+  players: PlayerRecord[];
+  selectedIds: number[];
+  onChange: (playerIds: number[]) => void;
+  error?: string;
+}) {
+  return (
+    <Field data-invalid={Boolean(error)}>
+      <FieldLabel>{label} (choose 2)</FieldLabel>
+      <div className="grid min-h-24 gap-2 rounded-md border p-3">
+        {players.length > 0 ? (
+          players.map((player) => {
+            const checked = selectedIds.includes(player.id);
+            const checkboxId = `fixture-${label.replaceAll(" ", "-").toLowerCase()}-${player.id}`;
+            return (
+              <label key={player.id} htmlFor={checkboxId} className="flex items-center gap-3 text-sm">
+                <Checkbox
+                  id={checkboxId}
+                  checked={checked}
+                  disabled={!checked && selectedIds.length >= 2}
+                  onCheckedChange={(nextChecked) =>
+                    onChange(
+                      nextChecked
+                        ? [...selectedIds, player.id]
+                        : selectedIds.filter((playerId) => playerId !== player.id),
+                    )
+                  }
+                />
+                <span>{player.name}</span>
+                <span className="ml-auto text-muted-foreground">{player.school_name}</span>
+              </label>
+            );
+          })
+        ) : (
+          <p className="text-sm text-muted-foreground">Choose a team with registered players.</p>
+        )}
+      </div>
+      <p className="text-xs text-muted-foreground">{selectedIds.length} of 2 selected</p>
+      <FieldError>{error}</FieldError>
+    </Field>
   );
 }
 

@@ -8,6 +8,8 @@ export type Fixture = {
   activity?: string;
   startAt?: string;
   endAt?: string;
+  homePlayers?: string[];
+  awayPlayers?: string[];
 };
 
 export type SportFixture = {
@@ -231,17 +233,33 @@ const badmintonFixtures: Fixture[] = badmintonTimes.flatMap((time, index) => {
       match: `Match ${index + 1}`,
       time,
       division: "Male",
-      venue: "Courts 1 & 2",
-      home: pairA.join(" / "),
-      away: pairB.join(" / "),
+      venue: "Court 1",
+      home: pairA[0],
+      away: pairA[1],
+    },
+    {
+      match: `Match ${index + 1}`,
+      time,
+      division: "Male",
+      venue: "Court 2",
+      home: pairB[0],
+      away: pairB[1],
     },
     {
       match: `Match ${index + 1}`,
       time,
       division: "Female",
-      venue: "Courts 3 & 4",
-      home: pairA.join(" / "),
-      away: pairB.join(" / "),
+      venue: "Court 3",
+      home: pairA[0],
+      away: pairA[1],
+    },
+    {
+      match: `Match ${index + 1}`,
+      time,
+      division: "Female",
+      venue: "Court 4",
+      home: pairB[0],
+      away: pairB[1],
     },
   ];
 });

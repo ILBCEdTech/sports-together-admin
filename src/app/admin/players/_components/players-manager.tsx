@@ -32,7 +32,7 @@ type PlayerForm = {
 
 const playerSchema = z.object({
   name: z.string().trim().min(2, "Enter the player's name.").max(100, "Use 100 characters or fewer."),
-  school_name: z.string().trim().min(2, "Enter the school name.").max(150, "Use 150 characters or fewer."),
+  school_name: z.string().trim().max(150, "Use 150 characters or fewer."),
 });
 const emptyForm: PlayerForm = { name: "", school_name: "" };
 
@@ -167,7 +167,7 @@ export function PlayersManager() {
                       {(meta.page - 1) * meta.pageSize + index + 1}
                     </TableCell>
                     <TableCell className="font-medium">{player.name}</TableCell>
-                    <TableCell>{player.school_name}</TableCell>
+                    <TableCell>{player.school_name || "—"}</TableCell>
                     <TableCell className="pr-4 text-right">
                       <Button
                         size="icon-sm"
@@ -204,7 +204,7 @@ export function PlayersManager() {
           <form onSubmit={submit} noValidate>
             <DialogHeader>
               <DialogTitle>{editing ? "Edit player" : "Create player"}</DialogTitle>
-              <DialogDescription>Enter the player and school names.</DialogDescription>
+              <DialogDescription>Enter the player name and an optional school name.</DialogDescription>
             </DialogHeader>
             <FieldGroup className="my-5 grid gap-4 sm:grid-cols-2">
               <Field className="sm:col-span-2" data-invalid={Boolean(errors.name)}>
@@ -219,7 +219,7 @@ export function PlayersManager() {
                 <FieldError>{errors.name}</FieldError>
               </Field>
               <Field className="sm:col-span-2" data-invalid={Boolean(errors.school_name)}>
-                <FieldLabel htmlFor="player-school">School name</FieldLabel>
+                <FieldLabel htmlFor="player-school">School name (optional)</FieldLabel>
                 <Input
                   id="player-school"
                   value={form.school_name}

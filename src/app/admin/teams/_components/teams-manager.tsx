@@ -66,9 +66,14 @@ export function TeamsManager() {
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<TeamRecord | null>(null);
   const [pendingDelete, setPendingDelete] = useState<TeamRecord | null>(null);
+  const [playerSearch, setPlayerSearch] = useState("");
   const activeSportId = listQuery.values.get("sportId") ?? "";
   const [form, setForm] = useState<TeamForm>({ name: "", sport_id: 0, player_ids: [] });
   const [errors, setErrors] = useState<Partial<Record<keyof TeamForm, string>>>({});
+  const normalizedPlayerSearch = playerSearch.trim().toLowerCase();
+  const visiblePlayers = normalizedPlayerSearch
+    ? players.filter((player) => player.name.toLowerCase().includes(normalizedPlayerSearch))
+    : players;
 
   useEffect(() => {
     Promise.all([
@@ -100,6 +105,7 @@ export function TeamsManager() {
 
   function startCreate() {
     setEditing(null);
+    setPlayerSearch("");
     setForm({
       name: "",
       sport_id: Number(activeSportId) || sports.find((sport) => sport.is_active)?.id || sports[0]?.id || 0,
@@ -111,6 +117,7 @@ export function TeamsManager() {
 
   function startEdit(team: TeamRecord) {
     setEditing(team);
+    setPlayerSearch("");
     setForm({
       name: team.name,
       sport_id: team.sport_id,
@@ -335,7 +342,10 @@ export function TeamsManager() {
                 <Input
                   id="team-name"
                   value={form.name}
-                  onChange={(event) => setForm({ ...form, name: event.target.value })}
+                  onChange={(event) => {
+                    setForm({ ...form, name: event.target.value });
+                    setErrors((current) => ({ ...current, name: undefined }));
+                  }}
                   aria-invalid={Boolean(errors.name)}
                   autoFocus
                 />
@@ -347,7 +357,10 @@ export function TeamsManager() {
                   id="team-sport"
                   className="w-full"
                   value={form.sport_id}
-                  onChange={(event) => setForm({ ...form, sport_id: Number(event.target.value) })}
+                  onChange={(event) => {
+                    setForm({ ...form, sport_id: Number(event.target.value) });
+                    setErrors((current) => ({ ...current, sport_id: undefined, name: undefined }));
+                  }}
                   aria-invalid={Boolean(errors.sport_id)}
                 >
                   {sports.map((sport) => (
@@ -361,9 +374,16 @@ export function TeamsManager() {
               </Field>
               <Field>
                 <FieldLabel>Players</FieldLabel>
+                <Input
+                  type="search"
+                  value={playerSearch}
+                  onChange={(event) => setPlayerSearch(event.target.value)}
+                  placeholder="Search players by name"
+                  aria-label="Search players by name"
+                />
                 <div className="max-h-64 divide-y overflow-y-auto rounded-lg border">
-                  {players.length ? (
-                    players.map((player) => {
+                  {visiblePlayers.length ? (
+                    visiblePlayers.map((player) => {
                       const checked = form.player_ids.includes(player.id);
                       return (
                         <label key={player.id} className="flex cursor-pointer items-center gap-3 p-3 hover:bg-muted/50">
@@ -385,6 +405,8 @@ export function TeamsManager() {
                         </label>
                       );
                     })
+                  ) : players.length ? (
+                    <p className="p-4 text-sm text-muted-foreground">No players match “{playerSearch.trim()}”.</p>
                   ) : (
                     <p className="p-4 text-sm text-muted-foreground">Create player records before building a roster.</p>
                   )}
