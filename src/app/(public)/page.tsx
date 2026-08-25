@@ -307,7 +307,7 @@ export default function HomePage() {
               </p>
 
               <p>
-                Through healthy competition and shared
+                Through healthy matches and shared
                 experiences, the programme continues to
                 strengthen bonds within the ILBC family and
                 promote the values of{" "}
