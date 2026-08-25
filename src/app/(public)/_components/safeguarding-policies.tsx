@@ -56,7 +56,7 @@ const evacuationPlans = [
     type: "School",
   },
   {
-    name: "ILBC International School - 2",
+    name: "ILBC International School - 3",
     file: "G3 Evacuation Plan 26-27 3.pdf",
     type: "School",
   },
