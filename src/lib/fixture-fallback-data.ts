@@ -488,7 +488,7 @@ export const fixtureFallbacks: Record<string, Fixture[]> = {
     {
       "match": "Match 6",
       "division": "Male Jr",
-      "time": "9:45 PM-10:01 AM",
+      "time": "9:45 AM-10:01 AM",
       "venue": "Basketball Court",
       "home": "Team B",
       "away": "Team C"

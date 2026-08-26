@@ -57,8 +57,9 @@ function EventSchedule({
     const startHour = fixture.startAt
       ? Number(new Intl.DateTimeFormat("en-US", { hour: "numeric", hour12: false, timeZone: "Asia/Yangon" }).format(new Date(fixture.startAt)))
       : (() => {
-          const hour = Number(fixture.time.match(/^\d+/)?.[0] ?? 0);
-          return fixture.time.includes("PM") && hour !== 12 ? hour + 12 : hour;
+          const startTime = fixture.time.split("-")[0];
+          const hour = Number(startTime.match(/^\d+/)?.[0] ?? 0);
+          return startTime.includes("PM") && hour !== 12 ? hour + 12 : hour;
         })();
     const division = groupBySession
       ? (startHour >= 13 ? "Afternoon Session" : "Morning Session")
