@@ -287,7 +287,7 @@ export const fixtureFallbacks: Record<string, Fixture[]> = {
     },
     {
       "match": "Match 4",
-      "division": "Male",
+      "division": "Female",
       "time": "1:00- 1:45 PM",
       "venue": "Volleyball Court — Female",
       "home": "Team L",
@@ -295,7 +295,7 @@ export const fixtureFallbacks: Record<string, Fixture[]> = {
     },
     {
       "match": "Match 5",
-      "division": "Male",
+      "division": "Female",
       "time": "1:50-2:35 PM",
       "venue": "Volleyball Court — Female",
       "home": "Team B",
@@ -303,7 +303,7 @@ export const fixtureFallbacks: Record<string, Fixture[]> = {
     },
     {
       "match": "Match 6",
-      "division": "Male",
+      "division": "Female",
       "time": "2:40-3:25 PM",
       "venue": "Volleyball Court — Female",
       "home": "Team C",
