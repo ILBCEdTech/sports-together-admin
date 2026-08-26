@@ -63,13 +63,17 @@ type FixtureForm = {
 };
 
 const statuses = ["SCHEDULED", "IN_PROGRESS", "COMPLETED", "CANCELLED", "POSTPONED"] as const;
-const fixtureLevels = ["Male Jr", "Female Jr", "Male Sr", "Female Sr"] as const;
+const footballFixtureLevels = ["Male Jr", "Female Jr", "Male Sr", "Female Sr"] as const;
+const volleyballFixtureLevels = ["Male", "Female"] as const;
 
-const usesFixtureLevel = (sport: Lookup | undefined) => {
+const fixtureLevelOptions = (sport: Lookup | undefined): readonly string[] => {
   const name = sport?.name.trim().toLowerCase();
   const code = sport?.code?.trim().toLowerCase();
-  return name === "football" || code === "football" || name === "volleyball" || code === "volleyball";
+  if (name === "volleyball" || code === "volleyball") return volleyballFixtureLevels;
+  if (name === "football" || code === "football") return footballFixtureLevels;
+  return [];
 };
+const usesFixtureLevel = (sport: Lookup | undefined) => fixtureLevelOptions(sport).length > 0;
 const usesTeamMatchup = (sport: Lookup | undefined) => {
   const supportedSports = ["football", "volleyball", "basketball", "badminton"];
   const name = sport?.name.trim().toLowerCase();
@@ -139,7 +143,8 @@ export function FixturesManager() {
   const [errors, setErrors] = useState<Partial<Record<keyof FixtureForm, string>>>({});
   const hasRequiredLookups = sports.length > 0 && tournaments.length > 0 && venues.length > 0;
   const selectedSport = sports.find((sport) => sport.id === form.sport_id);
-  const usesLevel = usesFixtureLevel(selectedSport);
+  const levelOptions = fixtureLevelOptions(selectedSport);
+  const usesLevel = levelOptions.length > 0;
   const usesTeams = usesTeamMatchup(selectedSport);
   const usesBadmintonPlayers = isBadminton(selectedSport);
   const homeRosterIds = new Set(
@@ -219,7 +224,7 @@ export function FixturesManager() {
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (usesLevel && !fixtureLevels.includes(form.round as (typeof fixtureLevels)[number])) {
+    if (usesLevel && !levelOptions.includes(form.round)) {
       setErrors((current) => ({ ...current, round: "Choose a level." }));
       return;
     }
@@ -480,14 +485,11 @@ export function FixturesManager() {
                 value={form.sport_id}
                 options={sports}
                 onChange={(value) => {
-                  const nextUsesLevel = usesFixtureLevel(sports.find((sport) => sport.id === value));
+                  const nextLevelOptions = fixtureLevelOptions(sports.find((sport) => sport.id === value));
                   setForm({
                     ...form,
                     sport_id: value,
-                    round:
-                      nextUsesLevel && fixtureLevels.includes(form.round as (typeof fixtureLevels)[number])
-                        ? form.round
-                        : "",
+                    round: nextLevelOptions.includes(form.round) ? form.round : "",
                     home_team_id: 0,
                     away_team_id: 0,
                     home_player_ids: [],
@@ -513,7 +515,7 @@ export function FixturesManager() {
                     <NativeSelectOption value="" disabled>
                       Select level
                     </NativeSelectOption>
-                    {fixtureLevels.map((level) => (
+                    {levelOptions.map((level) => (
                       <NativeSelectOption key={level} value={level}>
                         {level}
                       </NativeSelectOption>
