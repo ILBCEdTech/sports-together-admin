@@ -70,6 +70,12 @@ export type ResultRecord = {
   team_b_score: number | null;
   status: ResultStatus;
   remark: string | null;
+  name?: string | null;
+  team?: string | null;
+  lane?: number | null;
+  record?: string | null;
+  points?: number | null;
+  style?: string | null;
   created_at: string;
   updated_at: string;
 };

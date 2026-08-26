@@ -36,7 +36,16 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { adminApi } from "@/lib/admin-api.client";
 import { type AdminListMeta, type AdminListPayload, normalizeAdminListPayload } from "@/lib/admin-list";
-import type { FixtureRecord, FixtureTeamRecord, ResultRecord, ResultStatus, TeamRecord, TournamentRecord } from "@/lib/admin-records";
+import type {
+  FixtureRecord,
+  FixtureTeamRecord,
+  PlayerRecord,
+  ResultRecord,
+  ResultStatus,
+  TeamPlayerRecord,
+  TeamRecord,
+  TournamentRecord,
+} from "@/lib/admin-records";
 import { AdminFilterBar, AdminListPagination } from "@/components/admin/admin-list-controls";
 import { useAdminListQuery } from "@/hooks/use-admin-list-query";
 
@@ -47,6 +56,12 @@ type ResultForm = {
   team_b_score: string;
   status: ResultStatus;
   remark: string;
+  name: string;
+  team: string;
+  lane: string;
+  record: string;
+  points: string;
+  style: string;
 };
 
 type SportLookup = {
@@ -55,6 +70,16 @@ type SportLookup = {
 };
 
 const statuses = ["PENDING", "FINAL"] as const;
+const swimmingStyles = [
+  "Male Freestyle Preliminary",
+  "Male Backstroke Preliminary",
+  "Male Breaststroke Preliminary",
+  "Male Butterfly Preliminary",
+  "Female Freestyle Preliminary",
+  "Female Backstroke Preliminary",
+  "Female Breaststroke Preliminary",
+  "Female Butterfly Preliminary",
+] as const;
 const schema = z.object({
   fixture_id: z.number().int().positive("Choose a fixture."),
   winner_team_id: z.number().int().positive().nullable(),
@@ -62,6 +87,20 @@ const schema = z.object({
   team_b_score: z.string().refine((value) => value === "" || /^\d+$/.test(value), "Enter zero or a positive score."),
   status: z.enum(statuses),
   remark: z.string().trim().max(500, "Use 500 characters or fewer."),
+  name: z.string().trim(),
+  team: z.string().trim(),
+  lane: z.string(),
+  record: z.string().trim(),
+  points: z.string(),
+  style: z.string().trim(),
+});
+const swimmingSchema = z.object({
+  name: z.string().trim().min(1, "Enter the swimmer's name."),
+  team: z.string().trim().min(1, "Enter the swimmer's team."),
+  lane: z.string().regex(/^\d+$/, "Enter a valid lane number."),
+  record: z.string().trim().min(1, "Enter the swimmer's record."),
+  points: z.string().regex(/^\d+(?:\.\d+)?$/, "Enter zero or a positive number of points."),
+  style: z.enum(swimmingStyles, "Choose a swimming style."),
 });
 const emptyForm: ResultForm = {
   fixture_id: 0,
@@ -70,6 +109,12 @@ const emptyForm: ResultForm = {
   team_b_score: "",
   status: "PENDING",
   remark: "",
+  name: "",
+  team: "",
+  lane: "",
+  record: "",
+  points: "",
+  style: "",
 };
 
 export function ResultsManager() {
@@ -78,6 +123,8 @@ export function ResultsManager() {
   const [fixtures, setFixtures] = useState<FixtureRecord[]>([]);
   const [fixtureTeams, setFixtureTeams] = useState<FixtureTeamRecord[]>([]);
   const [teams, setTeams] = useState<TeamRecord[]>([]);
+  const [players, setPlayers] = useState<PlayerRecord[]>([]);
+  const [teamPlayers, setTeamPlayers] = useState<TeamPlayerRecord[]>([]);
   const [sports, setSports] = useState<SportLookup[]>([]);
   const [tournaments, setTournaments] = useState<TournamentRecord[]>([]);
   const [meta, setMeta] = useState<AdminListMeta>({ page: 1, pageSize: 20, total: 0, pageCount: 1 });
@@ -95,13 +142,17 @@ export function ResultsManager() {
       adminApi<FixtureRecord[]>("fixtures"),
       adminApi<FixtureTeamRecord[]>("fixture-teams"),
       adminApi<TeamRecord[]>("teams"),
+      adminApi<PlayerRecord[]>("players"),
+      adminApi<TeamPlayerRecord[]>("team-players"),
       adminApi<SportLookup[]>("sports"),
       adminApi<TournamentRecord[]>("tournaments"),
     ])
-      .then(([fixtureRows, fixtureTeamRows, teamRows, sportRows, tournamentRows]) => {
+      .then(([fixtureRows, fixtureTeamRows, teamRows, playerRows, teamPlayerRows, sportRows, tournamentRows]) => {
         setFixtures(fixtureRows);
         setFixtureTeams(fixtureTeamRows);
         setTeams(teamRows);
+        setPlayers(playerRows);
+        setTeamPlayers(teamPlayerRows);
         setSports(sportRows);
         setTournaments(tournamentRows);
       })
@@ -131,6 +182,17 @@ export function ResultsManager() {
   );
   const filteredResults = results;
   const selectedTeams = fixtureTeams.filter((link) => link.fixture_id === form.fixture_id);
+  const selectedFixture = fixtures.find((fixture) => fixture.id === form.fixture_id);
+  const selectedTeamRecords = teams.filter((team) => team.sport_id === selectedFixture?.sport_id);
+  const selectedTeam = selectedTeamRecords.find((team) => team.name === form.team);
+  const selectedTeamPlayerIds = new Set(
+    teamPlayers.filter((link) => link.team_id === selectedTeam?.id).map((link) => link.player_id),
+  );
+  const selectedTeamPlayers = players.filter((player) => selectedTeamPlayerIds.has(player.id));
+  const isSwimming = sports
+    .find((sport) => sport.id === selectedFixture?.sport_id)
+    ?.name.trim()
+    .toLowerCase() === "swimming";
 
   function fixtureLabel(fixtureId: number) {
     const fixture = fixtures.find((item) => item.id === fixtureId);
@@ -159,6 +221,12 @@ export function ResultsManager() {
       team_b_score: result.team_b_score?.toString() ?? "",
       status: result.status,
       remark: result.remark ?? "",
+      name: result.name ?? "",
+      team: result.team ?? "",
+      lane: result.lane?.toString() ?? "",
+      record: result.record ?? "",
+      points: result.points?.toString() ?? "",
+      style: result.style ?? "",
     });
     setErrors({});
     setOpen(true);
@@ -172,20 +240,46 @@ export function ResultsManager() {
       setErrors(Object.fromEntries(Object.entries(fields).map(([key, messages]) => [key, messages?.[0]])));
       return;
     }
+    if (isSwimming) {
+      const swimming = swimmingSchema.safeParse(parsed.data);
+      if (!swimming.success) {
+        const fields = swimming.error.flatten().fieldErrors;
+        setErrors(Object.fromEntries(Object.entries(fields).map(([key, messages]) => [key, messages?.[0]])));
+        return;
+      }
+      if (!selectedTeam) {
+        setErrors({ team: "Choose a swimming team." });
+        return;
+      }
+      if (!selectedTeamPlayers.some((player) => player.name === parsed.data.name)) {
+        setErrors({ name: "Choose a swimmer from the selected team." });
+        return;
+      }
+    }
     const participantIds = fixtureTeams
       .filter((link) => link.fixture_id === parsed.data.fixture_id)
       .map((link) => link.team_id);
-    if (parsed.data.winner_team_id && !participantIds.includes(parsed.data.winner_team_id)) {
+    if (!isSwimming && parsed.data.winner_team_id && !participantIds.includes(parsed.data.winner_team_id)) {
       setErrors({ winner_team_id: "Choose a team assigned to this fixture." });
       return;
     }
     const values = {
       fixture_id: parsed.data.fixture_id,
-      winner_team_id: parsed.data.winner_team_id,
-      team_a_score: parsed.data.team_a_score === "" ? null : Number(parsed.data.team_a_score),
-      team_b_score: parsed.data.team_b_score === "" ? null : Number(parsed.data.team_b_score),
+      winner_team_id: isSwimming ? null : parsed.data.winner_team_id,
+      team_a_score: isSwimming || parsed.data.team_a_score === "" ? null : Number(parsed.data.team_a_score),
+      team_b_score: isSwimming || parsed.data.team_b_score === "" ? null : Number(parsed.data.team_b_score),
       status: parsed.data.status,
       remark: parsed.data.remark || null,
+      ...(isSwimming
+        ? {
+            name: parsed.data.name,
+            team: parsed.data.team,
+            lane: Number(parsed.data.lane),
+            record: parsed.data.record,
+            points: Number(parsed.data.points),
+            style: parsed.data.style,
+          }
+        : {}),
     };
     setSaving(true);
     try {
@@ -341,7 +435,7 @@ export function ResultsManager() {
       </Card>
 
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="sm:max-w-xl">
+        <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-xl">
           <form onSubmit={submit} noValidate>
             <DialogHeader>
               <DialogTitle>{editing ? "Edit result" : "Create result"}</DialogTitle>
@@ -356,7 +450,13 @@ export function ResultsManager() {
                   value={form.fixture_id}
                   disabled={Boolean(editing)}
                   onChange={(event) =>
-                    setForm({ ...form, fixture_id: Number(event.target.value), winner_team_id: null })
+                    setForm({
+                      ...form,
+                      fixture_id: Number(event.target.value),
+                      winner_team_id: null,
+                      team: "",
+                      name: "",
+                    })
                   }
                 >
                   {!selectableFixtures.length && (
@@ -378,39 +478,132 @@ export function ResultsManager() {
                   This sport has no fixtures awaiting a result. Create a fixture first, or edit an existing result.
                 </p>
               ) : null}
-              <ScoreField
-                id="team-a-score"
-                label="Team A score"
-                value={form.team_a_score}
-                error={errors.team_a_score}
-                onChange={(value) => setForm({ ...form, team_a_score: value })}
-              />
-              <ScoreField
-                id="team-b-score"
-                label="Team B score"
-                value={form.team_b_score}
-                error={errors.team_b_score}
-                onChange={(value) => setForm({ ...form, team_b_score: value })}
-              />
-              <Field data-invalid={Boolean(errors.winner_team_id)}>
-                <FieldLabel htmlFor="result-winner">Winner</FieldLabel>
-                <NativeSelect
-                  id="result-winner"
-                  className="w-full"
-                  value={form.winner_team_id ?? ""}
-                  onChange={(event) =>
-                    setForm({ ...form, winner_team_id: event.target.value ? Number(event.target.value) : null })
-                  }
-                >
-                  <NativeSelectOption value="">Not declared / draw</NativeSelectOption>
-                  {selectedTeams.map((link) => (
-                    <NativeSelectOption key={link.team_id} value={link.team_id}>
-                      {teams.find((team) => team.id === link.team_id)?.name ?? `Team ${link.team_id}`}
-                    </NativeSelectOption>
-                  ))}
-                </NativeSelect>
-                <FieldError>{errors.winner_team_id}</FieldError>
-              </Field>
+              {isSwimming ? (
+                <>
+                  <Field data-invalid={Boolean(errors.team)}>
+                    <FieldLabel htmlFor="swimming-team">Team</FieldLabel>
+                    <NativeSelect
+                      id="swimming-team"
+                      className="w-full"
+                      value={form.team}
+                      onChange={(event) => setForm({ ...form, team: event.target.value, name: "" })}
+                      aria-invalid={Boolean(errors.team)}
+                    >
+                      <NativeSelectOption value="" disabled>
+                        Choose a team
+                      </NativeSelectOption>
+                      {selectedTeamRecords.map((team) => (
+                        <NativeSelectOption key={team.id} value={team.name}>
+                          {team.name}
+                        </NativeSelectOption>
+                      ))}
+                    </NativeSelect>
+                    <FieldError>{errors.team}</FieldError>
+                  </Field>
+                  <Field data-invalid={Boolean(errors.name)}>
+                    <FieldLabel htmlFor="swimming-name">Name</FieldLabel>
+                    <NativeSelect
+                      id="swimming-name"
+                      className="w-full"
+                      value={form.name}
+                      disabled={!selectedTeam}
+                      onChange={(event) => setForm({ ...form, name: event.target.value })}
+                      aria-invalid={Boolean(errors.name)}
+                    >
+                      <NativeSelectOption value="" disabled>
+                        {selectedTeam ? "Choose a swimmer" : "Choose a team first"}
+                      </NativeSelectOption>
+                      {selectedTeamPlayers.map((player) => (
+                        <NativeSelectOption key={player.id} value={player.name}>
+                          {player.name}
+                        </NativeSelectOption>
+                      ))}
+                    </NativeSelect>
+                    <FieldError>{errors.name}</FieldError>
+                  </Field>
+                  <NumberField
+                    id="swimming-lane"
+                    label="Lane"
+                    value={form.lane}
+                    error={errors.lane}
+                    step={1}
+                    onChange={(value) => setForm({ ...form, lane: value })}
+                  />
+                  <TextField
+                    id="swimming-record"
+                    label="Record"
+                    value={form.record}
+                    error={errors.record}
+                    placeholder="e.g. 00:58.42"
+                    onChange={(value) => setForm({ ...form, record: value })}
+                  />
+                  <NumberField
+                    id="swimming-points"
+                    label="Points"
+                    value={form.points}
+                    error={errors.points}
+                    step="any"
+                    onChange={(value) => setForm({ ...form, points: value })}
+                  />
+                  <Field data-invalid={Boolean(errors.style)}>
+                    <FieldLabel htmlFor="swimming-style">Style</FieldLabel>
+                    <NativeSelect
+                      id="swimming-style"
+                      className="w-full"
+                      value={form.style}
+                      onChange={(event) => setForm({ ...form, style: event.target.value })}
+                      aria-invalid={Boolean(errors.style)}
+                    >
+                      <NativeSelectOption value="" disabled>
+                        Choose a swimming style
+                      </NativeSelectOption>
+                      {swimmingStyles.map((style) => (
+                        <NativeSelectOption key={style} value={style}>
+                          {style}
+                        </NativeSelectOption>
+                      ))}
+                    </NativeSelect>
+                    <FieldError>{errors.style}</FieldError>
+                  </Field>
+                </>
+              ) : null}
+              {!isSwimming ? (
+                <>
+                  <ScoreField
+                    id="team-a-score"
+                    label="Team A score"
+                    value={form.team_a_score}
+                    error={errors.team_a_score}
+                    onChange={(value) => setForm({ ...form, team_a_score: value })}
+                  />
+                  <ScoreField
+                    id="team-b-score"
+                    label="Team B score"
+                    value={form.team_b_score}
+                    error={errors.team_b_score}
+                    onChange={(value) => setForm({ ...form, team_b_score: value })}
+                  />
+                  <Field data-invalid={Boolean(errors.winner_team_id)}>
+                    <FieldLabel htmlFor="result-winner">Winner</FieldLabel>
+                    <NativeSelect
+                      id="result-winner"
+                      className="w-full"
+                      value={form.winner_team_id ?? ""}
+                      onChange={(event) =>
+                        setForm({ ...form, winner_team_id: event.target.value ? Number(event.target.value) : null })
+                      }
+                    >
+                      <NativeSelectOption value="">Not declared / draw</NativeSelectOption>
+                      {selectedTeams.map((link) => (
+                        <NativeSelectOption key={link.team_id} value={link.team_id}>
+                          {teams.find((team) => team.id === link.team_id)?.name ?? `Team ${link.team_id}`}
+                        </NativeSelectOption>
+                      ))}
+                    </NativeSelect>
+                    <FieldError>{errors.winner_team_id}</FieldError>
+                  </Field>
+                </>
+              ) : null}
               <Field>
                 <FieldLabel htmlFor="result-status">Status</FieldLabel>
                 <NativeSelect
@@ -495,6 +688,69 @@ function ScoreField({
         min={0}
         step={1}
         inputMode="numeric"
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+        aria-invalid={Boolean(error)}
+      />
+      <FieldError>{error}</FieldError>
+    </Field>
+  );
+}
+
+function TextField({
+  id,
+  label,
+  value,
+  error,
+  placeholder,
+  onChange,
+}: {
+  id: string;
+  label: string;
+  value: string;
+  error?: string;
+  placeholder?: string;
+  onChange: (value: string) => void;
+}) {
+  return (
+    <Field data-invalid={Boolean(error)}>
+      <FieldLabel htmlFor={id}>{label}</FieldLabel>
+      <Input
+        id={id}
+        value={value}
+        placeholder={placeholder}
+        onChange={(event) => onChange(event.target.value)}
+        aria-invalid={Boolean(error)}
+      />
+      <FieldError>{error}</FieldError>
+    </Field>
+  );
+}
+
+function NumberField({
+  id,
+  label,
+  value,
+  error,
+  step,
+  onChange,
+}: {
+  id: string;
+  label: string;
+  value: string;
+  error?: string;
+  step: number | "any";
+  onChange: (value: string) => void;
+}) {
+  return (
+    <Field data-invalid={Boolean(error)}>
+      <FieldLabel htmlFor={id}>{label}</FieldLabel>
+      <Input
+        id={id}
+        type="number"
+        min={0}
+        step={step}
+        inputMode="decimal"
         value={value}
         onChange={(event) => onChange(event.target.value)}
         aria-invalid={Boolean(error)}
