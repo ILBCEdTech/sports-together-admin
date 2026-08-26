@@ -182,7 +182,7 @@ export async function SportPage({ sport }: { sport: SportFixture }) {
         <Trophy className="absolute -right-10 -bottom-16 size-64 rotate-12 text-sky-900" aria-hidden="true" />
         <div className="relative mx-auto max-w-7xl px-5 py-12 sm:px-6 sm:py-16 lg:px-8">
           <Badge className="border-0 bg-amber-400 font-black text-slate-950 uppercase tracking-[0.12em] hover:bg-amber-400">
-            Sports Together 2026–27
+            ILBC School Sports Together 2026–27
           </Badge>
           <div className="mt-6 flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
             <div>
