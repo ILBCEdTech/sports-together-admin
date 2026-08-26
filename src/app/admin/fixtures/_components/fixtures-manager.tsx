@@ -2,11 +2,21 @@
 
 import { type FormEvent, useEffect, useState } from "react";
 import Link from "next/link";
-import { CalendarDays, Eye, Pencil, Plus } from "lucide-react";
+import { CalendarDays, Eye, Pencil, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { z } from "zod";
 
 import { AdminFilterBar, AdminListPagination } from "@/components/admin/admin-list-controls";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -124,6 +134,7 @@ export function FixturesManager() {
   const [saving, setSaving] = useState(false);
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<FixtureRecord | null>(null);
+  const [deleting, setDeleting] = useState<FixtureRecord | null>(null);
   const [form, setForm] = useState<FixtureForm>(emptyForm);
   const [errors, setErrors] = useState<Partial<Record<keyof FixtureForm, string>>>({});
   const hasRequiredLookups = sports.length > 0 && tournaments.length > 0 && venues.length > 0;
@@ -307,6 +318,27 @@ export function FixturesManager() {
     setFixturePlayers((current) => current.filter((row) => row.fixture_id !== fixtureId));
   }
 
+  async function deleteFixture() {
+    if (!deleting) return;
+    setSaving(true);
+    try {
+      await adminApi(`fixtures/${deleting.id}`, { method: "DELETE" });
+      setFixtures((current) => current.filter((fixture) => fixture.id !== deleting.id));
+      setFixtureTeams((current) => current.filter((row) => row.fixture_id !== deleting.id));
+      setFixturePlayers((current) => current.filter((row) => row.fixture_id !== deleting.id));
+      setMeta((current) => {
+        const total = Math.max(0, current.total - 1);
+        return { ...current, total, pageCount: Math.max(1, Math.ceil(total / current.pageSize)) };
+      });
+      toast.success("Fixture deleted");
+      setDeleting(null);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Fixture could not be deleted.");
+    } finally {
+      setSaving(false);
+    }
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
@@ -353,7 +385,6 @@ export function FixturesManager() {
                   <TableHead>Fixture</TableHead>
                   <TableHead>Sport</TableHead>
                   <TableHead>Start</TableHead>
-                  <TableHead>Venue</TableHead>
                   <TableHead className="pr-4 text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
@@ -377,7 +408,6 @@ export function FixturesManager() {
                     </TableCell>
                     <TableCell>{sports.find((sport) => sport.id === item.sport_id)?.name ?? "Unknown"}</TableCell>
                     <TableCell>{dateLabel(item.start_at)}</TableCell>
-                    <TableCell>{venues.find((venue) => venue.id === item.venue_id)?.name ?? "Unassigned"}</TableCell>
                     <TableCell className="pr-4 text-right">
                       <Button size="icon-sm" variant="ghost" className="text-blue-600 hover:text-blue-700" asChild>
                         <Link href={`/admin/fixtures/${item.id}`} aria-label={`View fixture ${item.id}`}>
@@ -392,6 +422,15 @@ export function FixturesManager() {
                         className="text-green-600 hover:text-green-700"
                       >
                         <Pencil />
+                      </Button>
+                      <Button
+                        size="icon-sm"
+                        variant="ghost"
+                        onClick={() => setDeleting(item)}
+                        aria-label={`Delete fixture ${item.id}`}
+                        className="text-red-600 hover:text-red-700"
+                      >
+                        <Trash2 />
                       </Button>
                     </TableCell>
                   </TableRow>
@@ -614,6 +653,23 @@ export function FixturesManager() {
           </form>
         </DialogContent>
       </Dialog>
+      <AlertDialog open={Boolean(deleting)} onOpenChange={(nextOpen) => !nextOpen && setDeleting(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete this fixture?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This permanently removes the fixture
+              {deleting?.match_number ? ` ${deleting.match_number}` : ""} and its linked teams, players, and result.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={saving}>Cancel</AlertDialogCancel>
+            <AlertDialogAction variant="destructive" disabled={saving} onClick={deleteFixture}>
+              {saving ? "Deleting..." : "Delete fixture"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
