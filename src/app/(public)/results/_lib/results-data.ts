@@ -112,15 +112,15 @@ export async function getSportResults(requestedSportId?: number) {
     .map((result) => {
       const fixture = fixturesById.get(result.fixture_id)!;
       const links = linksByFixture.get(fixture.id) ?? [];
-      const home = links.find((link) => link.side === "HOME");
-      const away = links.find((link) => link.side === "AWAY");
+      const teamA = links[0];
+      const teamB = links[1];
       return {
         id: result.id,
         round: fixture.round,
         startAt: fixture.start_at,
         endAt: fixture.end_at,
-        homeTeam: home ? (teamsById.get(home.team_id)?.name ?? "Unknown team") : "Unknown team",
-        awayTeam: away ? (teamsById.get(away.team_id)?.name ?? "Unknown team") : "Unknown team",
+        homeTeam: teamA ? (teamsById.get(teamA.team_id)?.name ?? "Unknown team") : "Unknown team",
+        awayTeam: teamB ? (teamsById.get(teamB.team_id)?.name ?? "Unknown team") : "Unknown team",
         homeScore: result.team_a_score,
         awayScore: result.team_b_score,
         winner: result.winner_team_id ? (teamsById.get(result.winner_team_id)?.name ?? null) : null,
