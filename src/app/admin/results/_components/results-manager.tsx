@@ -189,7 +189,9 @@ export function ResultsManager() {
   const filteredResults = results;
   const activeSport = sports.find((sport) => sport.id === Number(activeSportId));
   const showsSwimmingResults = activeSport?.name.trim().toLowerCase() === "swimming";
-  const selectedTeams = fixtureTeams.filter((link) => link.fixture_id === form.fixture_id);
+  const selectedTeams = fixtureTeams
+    .filter((link) => link.fixture_id === form.fixture_id)
+    .sort((left, right) => (left.side === "HOME" ? 0 : 1) - (right.side === "HOME" ? 0 : 1));
   const selectedFixture = fixtures.find((fixture) => fixture.id === form.fixture_id);
   const selectedFixtureSport = sports.find((sport) => sport.id === selectedFixture?.sport_id);
   const selectedTeamRecords = teams.filter((team) => team.sport_id === selectedFixture?.sport_id);
@@ -205,7 +207,9 @@ export function ResultsManager() {
   function fixtureLabel(fixtureId: number) {
     const fixture = fixtures.find((item) => item.id === fixtureId);
     const sportName = sports.find((sport) => sport.id === fixture?.sport_id)?.name ?? "Unknown sport";
-    const links = fixtureTeams.filter((item) => item.fixture_id === fixtureId);
+    const links = fixtureTeams
+      .filter((item) => item.fixture_id === fixtureId)
+      .sort((left, right) => (left.side === "HOME" ? 0 : 1) - (right.side === "HOME" ? 0 : 1));
     const names = links.map((link) => teams.find((team) => team.id === link.team_id)?.name).filter(Boolean);
     return names.length === 2
       ? `${sportName} · ${names[0]} vs ${names[1]}`

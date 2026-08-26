@@ -112,7 +112,9 @@ export function FixtureDetails({ fixtureId }: { fixtureId: string }) {
   const tournament = data.tournaments.find((item) => item.id === fixture.tournament_id);
   const sport = data.sports.find((item) => item.id === fixture.sport_id);
   const venue = data.venues.find((item) => item.id === fixture.venue_id);
-  const teamLinks = data.fixtureTeams.filter((item) => item.fixture_id === fixture.id);
+  const teamLinks = data.fixtureTeams
+    .filter((item) => item.fixture_id === fixture.id)
+    .sort((left, right) => (left.side === "HOME" ? 0 : 1) - (right.side === "HOME" ? 0 : 1));
 
   return (
     <div className="space-y-6">

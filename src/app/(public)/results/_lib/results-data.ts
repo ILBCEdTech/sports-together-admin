@@ -112,8 +112,8 @@ export async function getSportResults(requestedSportId?: number) {
     .map((result) => {
       const fixture = fixturesById.get(result.fixture_id)!;
       const links = linksByFixture.get(fixture.id) ?? [];
-      const teamA = links[0];
-      const teamB = links[1];
+      const teamA = links.find((link) => link.side === "HOME");
+      const teamB = links.find((link) => link.side === "AWAY");
       return {
         id: result.id,
         round: fixture.round,
