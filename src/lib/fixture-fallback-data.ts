@@ -1,7 +1,7 @@
 import type { Fixture } from "@/lib/fixture-data";
 
 // Generated from Sportstogether fixture (1).xlsx. Backend fixtures always take priority.
-export const fixtureFallbacks = {
+export const fixtureFallbacks: Record<string, Fixture[]> = {
   "football": [
     {
       "match": "Match 1",
@@ -1795,4 +1795,4 @@ export const fixtureFallbacks = {
       ]
     }
   ]
-} satisfies Record<string, Fixture[]>;
+};
