@@ -52,6 +52,7 @@ type FixtureForm = {
   tournament_id: number;
   sport_id: number;
   venue_id: number | null;
+  match_number: string;
   round: string;
   start_at: string;
   end_at: string;
@@ -92,6 +93,7 @@ const schema = z
     tournament_id: z.number().int().positive("Choose a tournament."),
     sport_id: z.number().int().positive("Choose a sport."),
     venue_id: z.number().int().positive("Choose a venue."),
+    match_number: z.string().trim().max(60, "Use 60 characters or fewer."),
     round: z.string().trim().max(60, "Use 60 characters or fewer."),
     start_at: z.string().min(1, "Choose a start date and time."),
     end_at: z.string().min(1, "Choose an end date and time."),
@@ -106,6 +108,7 @@ const emptyForm: FixtureForm = {
   tournament_id: 0,
   sport_id: 0,
   venue_id: null,
+  match_number: "",
   round: "",
   start_at: "",
   end_at: "",
@@ -211,6 +214,7 @@ export function FixturesManager() {
       tournament_id: item.tournament_id,
       sport_id: item.sport_id,
       venue_id: item.venue_id,
+      match_number: item.match_number ?? "",
       round: item.round ?? "",
       start_at: dateInput(item.start_at),
       end_at: dateInput(item.end_at),
@@ -253,6 +257,7 @@ export function FixturesManager() {
       sport_id: result.data.sport_id,
       venue_id: result.data.venue_id,
       status: result.data.status,
+      match_number: usesBadmintonPlayers ? result.data.match_number || null : null,
       round: result.data.round || null,
       start_at: new Date(result.data.start_at).toISOString(),
       end_at: result.data.end_at ? new Date(result.data.end_at).toISOString() : null,
@@ -491,6 +496,7 @@ export function FixturesManager() {
                   setForm({
                     ...form,
                     sport_id: value,
+                    match_number: "",
                     round: nextLevelOptions.includes(form.round) ? form.round : "",
                     home_team_id: 0,
                     away_team_id: 0,
@@ -501,6 +507,22 @@ export function FixturesManager() {
                 }}
                 error={errors.sport_id}
               />
+              {usesBadmintonPlayers && (
+                <Field data-invalid={Boolean(errors.match_number)}>
+                  <FieldLabel htmlFor="fixture-match">Match (optional)</FieldLabel>
+                  <Input
+                    id="fixture-match"
+                    value={form.match_number}
+                    aria-invalid={Boolean(errors.match_number)}
+                    placeholder="Match 1"
+                    onChange={(event) => {
+                      setForm({ ...form, match_number: event.target.value });
+                      setErrors((current) => ({ ...current, match_number: undefined }));
+                    }}
+                  />
+                  <FieldError>{errors.match_number}</FieldError>
+                </Field>
+              )}
               {usesLevel ? (
                 <Field data-invalid={Boolean(errors.round)}>
                   <FieldLabel htmlFor="fixture-level">Level</FieldLabel>
