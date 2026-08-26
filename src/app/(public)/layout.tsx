@@ -1,7 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { ChevronRight, Menu } from "lucide-react";
-import { siFacebook, siInstagram, siX, type SimpleIcon } from "simple-icons";
+import { siFacebook, siInstagram, siTiktok, siYoutube, type SimpleIcon } from "simple-icons";
 
 import logo from "../../../logo.png";
 import { ActiveNavLink } from "./_components/active-nav-link";
@@ -33,11 +33,19 @@ function Brand({ inverted = false }: { inverted?: boolean }) {
   );
 }
 
-function SocialIcon({ icon }: { icon: SimpleIcon }) {
+function SocialIcon({ icon, href }: { icon: SimpleIcon; href: string }) {
   return (
-    <svg className="size-4 fill-current" viewBox="0 0 24 24" role="img" aria-label={icon.title}>
-      <path d={icon.path} />
-    </svg>
+    <a
+      href={href}
+      target="_blank"
+      rel="noreferrer"
+      className="transition-colors hover:text-white"
+      aria-label={`ILBC on ${icon.title}`}
+    >
+      <svg className="size-4 fill-current" viewBox="0 0 24 24" aria-hidden="true">
+        <path d={icon.path} />
+      </svg>
+    </a>
   );
 }
 
@@ -49,6 +57,6 @@ export default function PublicLayout({ children }: Readonly<{ children: React.Re
       <details className="relative lg:hidden"><summary className="grid size-10 cursor-pointer list-none place-items-center border border-slate-200" aria-label="Open menu"><Menu className="size-5" /></summary><nav className="absolute top-12 right-0 flex w-64 flex-col border border-slate-200 bg-white p-3 shadow-xl">{links.map(([label, href]) => label === "Students" ? <div key={label}><span className="block px-3 pt-3 pb-1 font-bold text-slate-500 text-xs uppercase tracking-[0.14em]">Students</span>{studentLinks.map((item) => <ActiveNavLink key={item.href} label={item.label} href={item.href} mobile />)}</div> : label === "Teachers" ? <div key={label}><span className="block px-3 pt-3 pb-1 font-bold text-slate-500 text-xs uppercase tracking-[0.14em]">Teachers</span>{teacherLinks.map((item) => <ActiveNavLink key={item.href} label={item.label} href={item.href} mobile />)}</div> : <ActiveNavLink key={label} label={label} href={href} mobile />)}<Link href="/admin/dashboard" className="mt-2 bg-amber-400 px-3 py-3 font-black text-xs uppercase">Portal login</Link></nav></details>
     </div></header>
     <main>{children}</main>
-    <footer className="bg-sky-900 text-white"><div className="mx-auto max-w-7xl px-5 py-16 lg:px-8"><div className="flex flex-col items-center gap-8"><Brand inverted /><nav className="flex flex-wrap justify-center gap-x-8 gap-y-3 text-sm uppercase">{links.map(([label, href]) => <Link key={label} href={href}>{label}</Link>)}</nav></div><div className="mt-14 flex flex-col gap-5 border-white/15 border-t pt-7 text-white/70 text-xs sm:flex-row sm:items-center sm:justify-between"><p>© 2026 ILBC International School. All rights reserved.</p><div className="flex gap-5" aria-label="Social media"><SocialIcon icon={siFacebook} /><SocialIcon icon={siX} /><SocialIcon icon={siInstagram} /></div></div></div></footer>
+    <footer className="bg-sky-900 text-white"><div className="mx-auto max-w-7xl px-5 py-16 lg:px-8"><div className="flex flex-col items-center gap-8"><Brand inverted /><nav className="flex flex-wrap justify-center gap-x-8 gap-y-3 text-sm uppercase">{links.map(([label, href]) => <Link key={label} href={href}>{label}</Link>)}</nav></div><div className="mt-14 flex flex-col gap-5 border-white/15 border-t pt-7 text-white/70 text-xs sm:flex-row sm:items-center sm:justify-between"><p>© 2026 ILBC International School. All rights reserved.</p><div className="flex gap-5" aria-label="Social media"><SocialIcon icon={siFacebook} href="https://www.facebook.com/ILBCEDU/" /><SocialIcon icon={siInstagram} href="https://www.instagram.com/ilbcofficial" /><SocialIcon icon={siYoutube} href="https://www.youtube.com/user/ILBCEDU" /><SocialIcon icon={siTiktok} href="https://www.tiktok.com/@ilbcofficial" /></div></div></div></footer>
   </div>;
 }
