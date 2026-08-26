@@ -70,6 +70,7 @@ type SportLookup = {
 };
 
 const statuses = ["PENDING", "FINAL"] as const;
+const resultStatusLabel = (status: ResultStatus) => (status === "FINAL" ? "Final" : "Complete");
 const fixtureDateTimeFormatter = new Intl.DateTimeFormat("en-US", {
   dateStyle: "medium",
   timeStyle: "short",
@@ -353,7 +354,11 @@ export function ResultsManager() {
               { key: "tournamentId", label: "Tournaments", options: tournaments.map((item) => ({ label: item.name, value: String(item.id) })) },
               { key: "from", label: "From date", type: "date" },
               { key: "to", label: "To date", type: "date" },
-              { key: "status", label: "Statuses", options: statuses.map((status) => ({ label: status, value: status })) },
+              {
+                key: "status",
+                label: "Statuses",
+                options: statuses.map((status) => ({ label: resultStatusLabel(status), value: status })),
+              },
               { key: "round", label: "Round", type: "text" },
             ]}
           />
@@ -427,7 +432,7 @@ export function ResultsManager() {
                         </TableCell>
                         <TableCell>
                           <Badge variant={result.status === "FINAL" ? "default" : "outline"}>
-                            {result.status === "FINAL" ? "Final" : "Pending"}
+                            {resultStatusLabel(result.status)}
                           </Badge>
                         </TableCell>
                       </>
@@ -670,7 +675,7 @@ export function ResultsManager() {
                 >
                   {statuses.map((status) => (
                     <NativeSelectOption key={status} value={status}>
-                      {status === "FINAL" ? "Final" : "Pending"}
+                      {resultStatusLabel(status)}
                     </NativeSelectOption>
                   ))}
                 </NativeSelect>

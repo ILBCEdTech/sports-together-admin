@@ -139,7 +139,7 @@ export default async function SportResultsPage({ params }: PageProps<"/results/[
                           </TableCell>
                           <TableCell className="h-16 px-3 sm:px-5">{item.winner || "—"}</TableCell>
                           <TableCell className="h-16 px-3 sm:px-5">
-                            {item.status === "FINAL" ? "Final" : "Pending"}
+                            {item.status === "FINAL" ? "Final" : "Complete"}
                           </TableCell>
                         </>
                       )}
