@@ -79,6 +79,8 @@ const swimmingStyles = [
   "Female Backstroke Preliminary",
   "Female Breaststroke Preliminary",
   "Female Butterfly Preliminary",
+  "Male Team Medley Relay",
+  "Female Team Medley Relay",
 ] as const;
 const schema = z.object({
   fixture_id: z.number().int().positive("Choose a fixture."),
@@ -181,6 +183,8 @@ export function ResultsManager() {
     [activeSportId, editing, fixtures, results],
   );
   const filteredResults = results;
+  const activeSport = sports.find((sport) => sport.id === Number(activeSportId));
+  const showsSwimmingResults = activeSport?.name.trim().toLowerCase() === "swimming";
   const selectedTeams = fixtureTeams.filter((link) => link.fixture_id === form.fixture_id);
   const selectedFixture = fixtures.find((fixture) => fixture.id === form.fixture_id);
   const selectedTeamRecords = teams.filter((team) => team.sport_id === selectedFixture?.sport_id);
@@ -369,10 +373,23 @@ export function ResultsManager() {
               <TableHeader>
                 <TableRow>
                   <TableHead className="w-14 pl-4">Sr.</TableHead>
-                  <TableHead>Fixture</TableHead>
-                  <TableHead>Score</TableHead>
-                  <TableHead>Winner</TableHead>
-                  <TableHead>Status</TableHead>
+                  {showsSwimmingResults ? (
+                    <>
+                      <TableHead>Name</TableHead>
+                      <TableHead>Team</TableHead>
+                      <TableHead>Lane</TableHead>
+                      <TableHead>Record</TableHead>
+                      <TableHead>Point</TableHead>
+                      <TableHead>Style</TableHead>
+                    </>
+                  ) : (
+                    <>
+                      <TableHead>Fixture</TableHead>
+                      <TableHead>Score</TableHead>
+                      <TableHead>Winner</TableHead>
+                      <TableHead>Status</TableHead>
+                    </>
+                  )}
                   <TableHead className="pr-4 text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
@@ -382,18 +399,31 @@ export function ResultsManager() {
                     <TableCell className="pl-4 text-muted-foreground tabular-nums">
                       {(meta.page - 1) * meta.pageSize + index + 1}
                     </TableCell>
-                    <TableCell className="font-medium">{fixtureLabel(result.fixture_id)}</TableCell>
-                    <TableCell>
-                      {result.team_a_score ?? "—"} – {result.team_b_score ?? "—"}
-                    </TableCell>
-                    <TableCell>
-                      {teams.find((team) => team.id === result.winner_team_id)?.name ?? "Not declared"}
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant={result.status === "FINAL" ? "default" : "outline"}>
-                        {result.status === "FINAL" ? "Final" : "Pending"}
-                      </Badge>
-                    </TableCell>
+                    {showsSwimmingResults ? (
+                      <>
+                        <TableCell className="font-medium">{result.name ?? "—"}</TableCell>
+                        <TableCell>{result.team ?? "—"}</TableCell>
+                        <TableCell className="tabular-nums">{result.lane ?? "—"}</TableCell>
+                        <TableCell className="tabular-nums">{result.record ?? "—"}</TableCell>
+                        <TableCell className="tabular-nums">{result.points ?? "—"}</TableCell>
+                        <TableCell className="font-medium">{result.style ?? "—"}</TableCell>
+                      </>
+                    ) : (
+                      <>
+                        <TableCell className="font-medium">{fixtureLabel(result.fixture_id)}</TableCell>
+                        <TableCell>
+                          {result.team_a_score ?? "—"} – {result.team_b_score ?? "—"}
+                        </TableCell>
+                        <TableCell>
+                          {teams.find((team) => team.id === result.winner_team_id)?.name ?? "Not declared"}
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant={result.status === "FINAL" ? "default" : "outline"}>
+                            {result.status === "FINAL" ? "Final" : "Pending"}
+                          </Badge>
+                        </TableCell>
+                      </>
+                    )}
                     <TableCell className="pr-4 text-right">
                       <Button
                         size="icon-sm"
