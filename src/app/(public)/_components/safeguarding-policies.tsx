@@ -52,7 +52,7 @@ const policies = [
 const evacuationPlans = [
   {
     name: "ILBC International School - 1",
-    file: "G1 Evacuation Plan 26-27 1.pdf",
+    file: "G1 Evacuation Plan 26-27.pdf",
     type: "School",
   },
   {
