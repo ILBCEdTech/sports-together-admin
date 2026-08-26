@@ -76,14 +76,14 @@ const fixtureDateTimeFormatter = new Intl.DateTimeFormat("en-US", {
   timeStyle: "short",
 });
 const swimmingStyles = [
-  "Male Freestyle Preliminary",
-  "Male Backstroke Preliminary",
-  "Male Breaststroke Preliminary",
-  "Male Butterfly Preliminary",
-  "Female Freestyle Preliminary",
-  "Female Backstroke Preliminary",
-  "Female Breaststroke Preliminary",
-  "Female Butterfly Preliminary",
+  "Male Freestyle Final",
+  "Male Backstroke Final",
+  "Male Breaststroke Final",
+  "Male Butterfly Final",
+  "Female Freestyle Final",
+  "Female Backstroke Final",
+  "Female Breaststroke Final",
+  "Female Butterfly Final",
   "Male Team Medley Relay",
   "Female Team Medley Relay",
 ] as const;
