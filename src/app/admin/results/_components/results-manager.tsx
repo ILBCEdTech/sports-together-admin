@@ -70,6 +70,10 @@ type SportLookup = {
 };
 
 const statuses = ["PENDING", "FINAL"] as const;
+const fixtureDateTimeFormatter = new Intl.DateTimeFormat("en-US", {
+  dateStyle: "medium",
+  timeStyle: "short",
+});
 const swimmingStyles = [
   "Male Freestyle Preliminary",
   "Male Backstroke Preliminary",
@@ -187,16 +191,16 @@ export function ResultsManager() {
   const showsSwimmingResults = activeSport?.name.trim().toLowerCase() === "swimming";
   const selectedTeams = fixtureTeams.filter((link) => link.fixture_id === form.fixture_id);
   const selectedFixture = fixtures.find((fixture) => fixture.id === form.fixture_id);
+  const selectedFixtureSport = sports.find((sport) => sport.id === selectedFixture?.sport_id);
   const selectedTeamRecords = teams.filter((team) => team.sport_id === selectedFixture?.sport_id);
   const selectedTeam = selectedTeamRecords.find((team) => team.name === form.team);
   const selectedTeamPlayerIds = new Set(
     teamPlayers.filter((link) => link.team_id === selectedTeam?.id).map((link) => link.player_id),
   );
   const selectedTeamPlayers = players.filter((player) => selectedTeamPlayerIds.has(player.id));
-  const isSwimming = sports
-    .find((sport) => sport.id === selectedFixture?.sport_id)
-    ?.name.trim()
-    .toLowerCase() === "swimming";
+  const selectedFixtureSportName = selectedFixtureSport?.name.trim().toLowerCase();
+  const isSwimming = selectedFixtureSportName === "swimming";
+  const isFootball = selectedFixtureSportName === "football";
 
   function fixtureLabel(fixtureId: number) {
     const fixture = fixtures.find((item) => item.id === fixtureId);
@@ -498,6 +502,24 @@ export function ResultsManager() {
                     </NativeSelectOption>
                   ))}
                 </NativeSelect>
+                {isFootball && selectedFixture ? (
+                  <div className="grid gap-3 rounded-lg border bg-muted/50 p-3 text-sm sm:grid-cols-2">
+                    <div>
+                      <p className="text-xs text-muted-foreground">Start time</p>
+                      <p className="mt-1 font-medium">
+                        {fixtureDateTimeFormatter.format(new Date(selectedFixture.start_at))}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-muted-foreground">End time</p>
+                      <p className="mt-1 font-medium">
+                        {selectedFixture.end_at
+                          ? fixtureDateTimeFormatter.format(new Date(selectedFixture.end_at))
+                          : "Not scheduled"}
+                      </p>
+                    </div>
+                  </div>
+                ) : null}
                 <FieldError>{errors.fixture_id}</FieldError>
               </Field>
               {!editing && !selectableFixtures.length ? (
