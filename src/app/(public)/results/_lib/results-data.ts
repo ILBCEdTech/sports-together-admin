@@ -22,8 +22,25 @@ const resultSchema = z.object({
   team_b_score: z.number().nullable(),
   status: z.enum(["PENDING", "FINAL"]),
   remark: z.string().nullable(),
+  name: z.unknown().optional(),
+  team: z.unknown().optional(),
+  lane: z.unknown().optional(),
+  record: z.unknown().optional(),
+  points: z.unknown().optional(),
+  style: z.unknown().optional(),
 });
 type FixtureTeam = z.infer<typeof fixtureTeamSchema>;
+
+function optionalText(value: unknown) {
+  return typeof value === "string" && value.trim() ? value : null;
+}
+
+function optionalNumber(value: unknown) {
+  if (typeof value === "number" && Number.isFinite(value)) return value;
+  if (typeof value !== "string" || !value.trim()) return null;
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : null;
+}
 
 async function getResource<T>(path: string, schema: z.ZodType<T>): Promise<T> {
   const baseUrl = (process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:5000").replace(/\/$/, "");
@@ -44,6 +61,12 @@ export type PublicResult = {
   winner: string | null;
   status: "PENDING" | "FINAL";
   remark: string | null;
+  name: string | null;
+  team: string | null;
+  lane: number | null;
+  record: string | null;
+  points: number | null;
+  style: string | null;
 };
 
 export function sportSlug(name: string) {
@@ -103,6 +126,12 @@ export async function getSportResults(requestedSportId?: number) {
         winner: result.winner_team_id ? (teamsById.get(result.winner_team_id)?.name ?? null) : null,
         status: result.status,
         remark: result.remark,
+        name: optionalText(result.name),
+        team: optionalText(result.team),
+        lane: optionalNumber(result.lane),
+        record: optionalText(result.record),
+        points: optionalNumber(result.points),
+        style: optionalText(result.style),
       } satisfies PublicResult;
     });
 

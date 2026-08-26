@@ -41,6 +41,7 @@ export default async function SportResultsPage({ params }: PageProps<"/results/[
 
     const { sportName, results } = result;
     const hero = sportHero[sport];
+    const isSwimming = sport === "swimming";
 
     return (
       <main className="min-h-screen bg-slate-100 pb-16 sm:pb-20">
@@ -87,33 +88,61 @@ export default async function SportResultsPage({ params }: PageProps<"/results/[
               <Table className="bg-white text-base">
                 <TableHeader className="bg-sky-100">
                   <TableRow className="hover:bg-sky-100">
-                    <TableHead className="h-14 px-3 font-black text-slate-950 sm:px-5">Match</TableHead>
-                    <TableHead className="h-14 px-3 font-black text-slate-950 sm:px-5">Date</TableHead>
-                    <TableHead className="h-14 px-3 font-black text-slate-950 sm:px-5">Round</TableHead>
-                    <TableHead className="h-14 px-3 font-black text-slate-950 sm:px-5">Teams</TableHead>
-                    <TableHead className="h-14 px-3 text-center font-black text-slate-950 sm:px-5">Score</TableHead>
-                    <TableHead className="h-14 px-3 font-black text-slate-950 sm:px-5">Winner</TableHead>
-                    <TableHead className="h-14 px-3 font-black text-slate-950 sm:px-5">Status</TableHead>
+                    {isSwimming ? (
+                      <>
+                        <TableHead className="h-14 px-3 font-black text-slate-950 sm:px-5">Name</TableHead>
+                        <TableHead className="h-14 px-3 font-black text-slate-950 sm:px-5">Team</TableHead>
+                        <TableHead className="h-14 px-3 font-black text-slate-950 sm:px-5">Lane</TableHead>
+                        <TableHead className="h-14 px-3 font-black text-slate-950 sm:px-5">Record</TableHead>
+                        <TableHead className="h-14 px-3 font-black text-slate-950 sm:px-5">Point</TableHead>
+                        <TableHead className="h-14 px-3 font-black text-slate-950 sm:px-5">Style</TableHead>
+                      </>
+                    ) : (
+                      <>
+                        <TableHead className="h-14 px-3 font-black text-slate-950 sm:px-5">Match</TableHead>
+                        <TableHead className="h-14 px-3 font-black text-slate-950 sm:px-5">Date</TableHead>
+                        <TableHead className="h-14 px-3 font-black text-slate-950 sm:px-5">Round</TableHead>
+                        <TableHead className="h-14 px-3 font-black text-slate-950 sm:px-5">Teams</TableHead>
+                        <TableHead className="h-14 px-3 text-center font-black text-slate-950 sm:px-5">
+                          Score
+                        </TableHead>
+                        <TableHead className="h-14 px-3 font-black text-slate-950 sm:px-5">Winner</TableHead>
+                        <TableHead className="h-14 px-3 font-black text-slate-950 sm:px-5">Status</TableHead>
+                      </>
+                    )}
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {results.map((item, index) => (
                     <TableRow key={item.id} className="odd:bg-white even:bg-slate-50 hover:bg-slate-100">
-                      <TableCell className="h-16 px-3 font-semibold sm:px-5">Match {index + 1}</TableCell>
-                      <TableCell className="h-16 whitespace-nowrap px-3 sm:px-5">
-                        {resultDateAndTime(item.startAt, item.endAt)}
-                      </TableCell>
-                      <TableCell className="h-16 px-3 sm:px-5">{item.round || "—"}</TableCell>
-                      <TableCell className="h-16 px-3 font-medium sm:px-5">
-                        {item.homeTeam} vs {item.awayTeam}
-                      </TableCell>
-                      <TableCell className="h-16 px-3 text-center font-bold sm:px-5">
-                        {item.homeScore ?? "—"} – {item.awayScore ?? "—"}
-                      </TableCell>
-                      <TableCell className="h-16 px-3 sm:px-5">{item.winner || "—"}</TableCell>
-                      <TableCell className="h-16 px-3 sm:px-5">
-                        {item.status === "FINAL" ? "Final" : "Pending"}
-                      </TableCell>
+                      {isSwimming ? (
+                        <>
+                          <TableCell className="h-16 px-3 font-semibold sm:px-5">{item.name || "—"}</TableCell>
+                          <TableCell className="h-16 px-3 sm:px-5">{item.team || "—"}</TableCell>
+                          <TableCell className="h-16 px-3 tabular-nums sm:px-5">{item.lane ?? "—"}</TableCell>
+                          <TableCell className="h-16 px-3 tabular-nums sm:px-5">{item.record || "—"}</TableCell>
+                          <TableCell className="h-16 px-3 tabular-nums sm:px-5">{item.points ?? "—"}</TableCell>
+                          <TableCell className="h-16 px-3 font-medium sm:px-5">{item.style || "—"}</TableCell>
+                        </>
+                      ) : (
+                        <>
+                          <TableCell className="h-16 px-3 font-semibold sm:px-5">Match {index + 1}</TableCell>
+                          <TableCell className="h-16 whitespace-nowrap px-3 sm:px-5">
+                            {resultDateAndTime(item.startAt, item.endAt)}
+                          </TableCell>
+                          <TableCell className="h-16 px-3 sm:px-5">{item.round || "—"}</TableCell>
+                          <TableCell className="h-16 px-3 font-medium sm:px-5">
+                            {item.homeTeam} vs {item.awayTeam}
+                          </TableCell>
+                          <TableCell className="h-16 px-3 text-center font-bold sm:px-5">
+                            {item.homeScore ?? "—"} – {item.awayScore ?? "—"}
+                          </TableCell>
+                          <TableCell className="h-16 px-3 sm:px-5">{item.winner || "—"}</TableCell>
+                          <TableCell className="h-16 px-3 sm:px-5">
+                            {item.status === "FINAL" ? "Final" : "Pending"}
+                          </TableCell>
+                        </>
+                      )}
                     </TableRow>
                   ))}
                 </TableBody>
