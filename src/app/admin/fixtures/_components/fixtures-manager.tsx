@@ -64,12 +64,14 @@ type FixtureForm = {
 
 const statuses = ["SCHEDULED", "IN_PROGRESS", "COMPLETED", "CANCELLED", "POSTPONED"] as const;
 const footballFixtureLevels = ["Male Jr", "Female Jr", "Male Sr", "Female Sr"] as const;
+const basketballFixtureLevels = ["Male Sr", "Male Jr", "Female Sr", "Female Jr"] as const;
 const volleyballFixtureLevels = ["Male", "Female"] as const;
 
 const fixtureLevelOptions = (sport: Lookup | undefined): readonly string[] => {
   const name = sport?.name.trim().toLowerCase();
   const code = sport?.code?.trim().toLowerCase();
   if (name === "volleyball" || code === "volleyball") return volleyballFixtureLevels;
+  if (name === "basketball" || code === "basketball") return basketballFixtureLevels;
   if (name === "football" || code === "football") return footballFixtureLevels;
   return [];
 };
