@@ -45,6 +45,7 @@ import type {
   TeamPlayerRecord,
   TeamRecord,
   TournamentRecord,
+  VenueRecord,
 } from "@/lib/admin-records";
 import { AdminFilterBar, AdminListPagination } from "@/components/admin/admin-list-controls";
 import { useAdminListQuery } from "@/hooks/use-admin-list-query";
@@ -132,6 +133,7 @@ export function ResultsManager() {
   const [teams, setTeams] = useState<TeamRecord[]>([]);
   const [players, setPlayers] = useState<PlayerRecord[]>([]);
   const [teamPlayers, setTeamPlayers] = useState<TeamPlayerRecord[]>([]);
+  const [venues, setVenues] = useState<VenueRecord[]>([]);
   const [sports, setSports] = useState<SportLookup[]>([]);
   const [tournaments, setTournaments] = useState<TournamentRecord[]>([]);
   const [meta, setMeta] = useState<AdminListMeta>({ page: 1, pageSize: 20, total: 0, pageCount: 1 });
@@ -151,18 +153,22 @@ export function ResultsManager() {
       adminApi<TeamRecord[]>("teams"),
       adminApi<PlayerRecord[]>("players"),
       adminApi<TeamPlayerRecord[]>("team-players"),
+      adminApi<VenueRecord[]>("venues"),
       adminApi<SportLookup[]>("sports"),
       adminApi<TournamentRecord[]>("tournaments"),
     ])
-      .then(([fixtureRows, fixtureTeamRows, teamRows, playerRows, teamPlayerRows, sportRows, tournamentRows]) => {
-        setFixtures(fixtureRows);
-        setFixtureTeams(fixtureTeamRows);
-        setTeams(teamRows);
-        setPlayers(playerRows);
-        setTeamPlayers(teamPlayerRows);
-        setSports(sportRows);
-        setTournaments(tournamentRows);
-      })
+      .then(
+        ([fixtureRows, fixtureTeamRows, teamRows, playerRows, teamPlayerRows, venueRows, sportRows, tournamentRows]) => {
+          setFixtures(fixtureRows);
+          setFixtureTeams(fixtureTeamRows);
+          setTeams(teamRows);
+          setPlayers(playerRows);
+          setTeamPlayers(teamPlayerRows);
+          setVenues(venueRows);
+          setSports(sportRows);
+          setTournaments(tournamentRows);
+        },
+      )
       .catch((error: Error) => toast.error(error.message));
   }, []);
 
@@ -212,9 +218,18 @@ export function ResultsManager() {
       .filter((item) => item.fixture_id === fixtureId)
       .sort((left, right) => (left.side === "HOME" ? 0 : 1) - (right.side === "HOME" ? 0 : 1));
     const names = links.map((link) => teams.find((team) => team.id === link.team_id)?.name).filter(Boolean);
-    return names.length === 2
+    const label = names.length === 2
       ? `${sportName} · ${names[0]} vs ${names[1]}`
       : `${sportName} · Fixture ${fixtureId}${fixture?.round ? ` · ${fixture.round}` : ""}`;
+    if (sportName.trim().toLowerCase() !== "badminton") return label;
+
+    const venueName = venues.find((venue) => venue.id === fixture?.venue_id)?.name;
+    const courtNo = venueName?.replace(/^court\s*/i, "").trim() || "—";
+    const badmintonFixtures = fixtures.filter((item) => item.sport_id === fixture?.sport_id);
+    const fallbackMatchNo = badmintonFixtures.findIndex((item) => item.id === fixtureId) + 1;
+    const matchNo =
+      fixture?.match_number?.replace(/^match\s*(?:no\.?\s*)?/i, "").trim() || String(fallbackMatchNo);
+    return `${label} · Match No. ${matchNo} · Court No. ${courtNo}`;
   }
 
   function startCreate() {
