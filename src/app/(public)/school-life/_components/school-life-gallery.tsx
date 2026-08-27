@@ -55,8 +55,7 @@ function GalleryCarousel({ gallery }: { gallery: SchoolLifeGalleryData }) {
         </p>
       </div>
 
-      <div
-        role="region"
+      <section
         aria-roledescription="carousel"
         aria-label={`${gallery.sportName}: ${gallery.title}`}
         className="relative mt-4"
@@ -136,7 +135,7 @@ function GalleryCarousel({ gallery }: { gallery: SchoolLifeGalleryData }) {
             >
               <ChevronRight />
             </Button>
-            <div
+            <nav
               className="absolute bottom-4 left-1/2 z-20 flex -translate-x-1/2 gap-2 rounded-full bg-slate-950/30 px-3 py-2 backdrop-blur-sm"
               aria-label="Choose a gallery slide"
             >
@@ -152,10 +151,10 @@ function GalleryCarousel({ gallery }: { gallery: SchoolLifeGalleryData }) {
                   }`}
                 />
               ))}
-            </div>
+            </nav>
           </>
         )}
-      </div>
+      </section>
 
       <Dialog
         open={Boolean(maximizedImage)}

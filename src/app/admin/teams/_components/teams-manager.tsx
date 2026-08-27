@@ -380,8 +380,13 @@ export function TeamsManager() {
                     visiblePlayers.map((player) => {
                       const checked = form.player_ids.includes(player.id);
                       return (
-                        <label key={player.id} className="flex cursor-pointer items-center gap-3 p-3 hover:bg-muted/50">
+                        <label
+                          key={player.id}
+                          htmlFor={`team-player-${player.id}`}
+                          className="flex cursor-pointer items-center gap-3 p-3 hover:bg-muted/50"
+                        >
                           <Checkbox
+                            id={`team-player-${player.id}`}
                             checked={checked}
                             onCheckedChange={(value) =>
                               setForm({

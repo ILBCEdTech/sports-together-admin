@@ -134,7 +134,9 @@ export function GalleriesManager() {
   });
 
   function resetForm() {
-    images.forEach((image) => URL.revokeObjectURL(image.preview));
+    images.forEach((image) => {
+      URL.revokeObjectURL(image.preview);
+    });
     setSportId("");
     setTitle("");
     setDescription("");
@@ -184,7 +186,9 @@ export function GalleriesManager() {
 
   async function uploadImages(galleryId: number, existingImageCount = 0) {
     const form = new FormData();
-    images.forEach((image) => form.append("images", image.file));
+    images.forEach((image) => {
+      form.append("images", image.file);
+    });
     const response = await fetch(`/api/admin/sport-galleries/${galleryId}/images`, { method: "POST", body: form });
     const payload = (await response.json().catch(() => null)) as SportGallery | { message?: string } | null;
     if (!response.ok) {

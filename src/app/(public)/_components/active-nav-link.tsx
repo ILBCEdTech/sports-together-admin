@@ -20,13 +20,10 @@ export function ActiveNavLink({
 
   useEffect(() => {
     const updateHash = () => setHash(window.location.hash);
+    updateHash();
     window.addEventListener("hashchange", updateHash);
     return () => window.removeEventListener("hashchange", updateHash);
   }, []);
-
-  useEffect(() => {
-    setHash(window.location.hash);
-  }, [pathname]);
 
   let active = pathname === href || pathname.startsWith(`${href}/`);
 

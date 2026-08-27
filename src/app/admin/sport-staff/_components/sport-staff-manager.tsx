@@ -1,6 +1,6 @@
 "use client";
 
-import { type FormEvent, useEffect, useState } from "react";
+import { type FormEvent, useCallback, useEffect, useState } from "react";
 import { Pencil, Plus, Trash2, UserCog } from "lucide-react";
 import { toast } from "sonner";
 import { z } from "zod";
@@ -59,7 +59,7 @@ export function SportStaffManager() {
   const [pendingDelete, setPendingDelete] = useState<{ kind: StaffKind; id: number; name: string } | null>(null);
   const [error, setError] = useState("");
 
-  async function load() {
+  const load = useCallback(async () => {
     try {
       const [sportData, coachData, commissionerData] = await Promise.all([
         adminApi<Sport[]>("sports"),
@@ -73,11 +73,11 @@ export function SportStaffManager() {
     } catch (loadError) {
       toast.error(loadError instanceof Error ? loadError.message : "Sport staff could not be loaded.");
     }
-  }
+  }, []);
 
   useEffect(() => {
     void load();
-  }, []);
+  }, [load]);
 
   const sportId = Number(activeSport);
   const sportCoaches = coaches.filter((coach) => coach.sport_id === sportId);

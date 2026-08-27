@@ -43,7 +43,7 @@ function EventSchedule({
 }) {
   const schedules = new Map<string, { venue: string; division: string | null; fixtures: Fixture[] }>();
   for (const fixture of fixtures) {
-    const venue = fixture.venue || "Event venue";
+    const venue = fixture.venue ?? "Event venue";
     const startHour = fixture.startAt
       ? Number(new Intl.DateTimeFormat("en-US", { hour: "numeric", hour12: false, timeZone: "Asia/Yangon" }).format(new Date(fixture.startAt)))
       : (() => {
