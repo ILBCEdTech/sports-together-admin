@@ -50,18 +50,21 @@ type GalleryImage = {
 };
 type SportGallery = {
   id: number;
-  sport_id: number;
+  sport_id: number | null;
   title: string;
   description: string | null;
   created_at: string;
   updated_at: string;
-  sport?: Sport;
+  sport?: Sport | null;
   images: GalleryImage[];
 };
 type PendingImage = { id: string; file: File; preview: string; altText: string };
 
 const gallerySchema = z.object({
-  sport_id: z.coerce.number().int().positive("Choose a sport."),
+  sport_id: z.preprocess(
+    (value) => (value === "" ? null : value),
+    z.coerce.number().int().positive("Choose a valid sport.").nullable(),
+  ),
   title: z.string().trim().min(2, "Enter a gallery title.").max(120, "Use 120 characters or fewer."),
   description: z.string().trim().max(500, "Use 500 characters or fewer."),
 });
@@ -107,9 +110,12 @@ export function GalleriesManager() {
     const value = query.trim().toLowerCase();
     return galleries.filter((gallery) => {
       if (gallery.images.length === 0) return false;
-      if (selectedSport !== "all" && gallery.sport_id !== Number(selectedSport)) return false;
+      if (selectedSport === "general" && gallery.sport_id !== null) return false;
+      if (selectedSport !== "all" && selectedSport !== "general" && gallery.sport_id !== Number(selectedSport)) {
+        return false;
+      }
       if (!value) return true;
-      const sportName = gallery.sport?.name ?? sports.find((sport) => sport.id === gallery.sport_id)?.name ?? "";
+      const sportName = gallery.sport?.name ?? sports.find((sport) => sport.id === gallery.sport_id)?.name ?? "School Life";
       return gallery.title.toLowerCase().includes(value) || sportName.toLowerCase().includes(value);
     });
   }, [galleries, query, selectedSport, sports]);
@@ -118,12 +124,13 @@ export function GalleriesManager() {
     const sportIds = new Set(galleries.filter((gallery) => gallery.images.length > 0).map((gallery) => gallery.sport_id));
     return sports.filter((sport) => sportIds.has(sport.id));
   }, [galleries, sports]);
+  const hasGeneralGalleries = galleries.some((gallery) => gallery.images.length > 0 && gallery.sport_id === null);
 
   const galleryCount = galleries.filter((gallery) => gallery.images.length > 0).length;
 
   const visibleImages = filtered.flatMap((gallery) => {
     const sport = gallery.sport ?? sports.find((item) => item.id === gallery.sport_id);
-    return gallery.images.map((image) => ({ gallery, image, sportName: sport?.name }));
+    return gallery.images.map((image) => ({ gallery, image, sportName: sport?.name ?? "School Life" }));
   });
 
   function resetForm() {
@@ -144,7 +151,7 @@ export function GalleriesManager() {
   function startEdit(gallery: SportGallery) {
     resetForm();
     setEditingGallery(gallery);
-    setSportId(String(gallery.sport_id));
+    setSportId(gallery.sport_id === null ? "" : String(gallery.sport_id));
     setTitle(gallery.title);
     setDescription(gallery.description ?? "");
     setOpen(true);
@@ -225,7 +232,7 @@ export function GalleriesManager() {
       const uploadedGallery = images.length
         ? await uploadImages(gallery.id, editingGallery?.images.length ?? 0)
         : gallery;
-      const sport = sports.find((item) => item.id === result.data.sport_id);
+      const sport = result.data.sport_id === null ? null : sports.find((item) => item.id === result.data.sport_id);
       setGalleries((current) =>
         editingGallery
           ? current.map((item) => (item.id === editingGallery.id ? { ...uploadedGallery, sport } : item))
@@ -263,7 +270,7 @@ export function GalleriesManager() {
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <h1 className="font-medium text-3xl tracking-tight">Galleries</h1>
-          <p className="mt-1 text-muted-foreground">Organize event photos into galleries for each sport.</p>
+          <p className="mt-1 text-muted-foreground">Organize school-life and sports event photos into galleries.</p>
         </div>
         <Button onClick={startCreate}>
           <Plus data-icon="inline-start" /> New gallery
@@ -275,7 +282,10 @@ export function GalleriesManager() {
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <CardTitle>Gallery library</CardTitle>
-              <p className="mt-1 text-sm text-muted-foreground">{galleryCount} galleries with images across {sportsWithImages.length} sports</p>
+              <p className="mt-1 text-sm text-muted-foreground">
+                {galleryCount} galleries with images · {sportsWithImages.length} sports
+                {hasGeneralGalleries ? " · School Life collections" : ""}
+              </p>
             </div>
             <div className="relative w-full sm:w-64">
               <Search className="pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground" />
@@ -284,11 +294,12 @@ export function GalleriesManager() {
           </div>
         </CardHeader>
         <CardContent className="pt-6">
-          {!loading && sportsWithImages.length > 0 && (
+          {!loading && (sportsWithImages.length > 0 || hasGeneralGalleries) && (
             <Tabs value={selectedSport} onValueChange={setSelectedSport} className="mb-6 min-w-0">
               <div className="overflow-x-auto pb-1">
                 <TabsList className="min-w-max" aria-label="Filter galleries by sport">
-                  <TabsTrigger value="all">All sports</TabsTrigger>
+                  <TabsTrigger value="all">All galleries</TabsTrigger>
+                  {hasGeneralGalleries && <TabsTrigger value="general">School Life</TabsTrigger>}
                   {sportsWithImages.map((sport) => (
                     <TabsTrigger key={sport.id} value={String(sport.id)}>
                       {sport.name}
@@ -337,13 +348,13 @@ export function GalleriesManager() {
                     </div>
                   )}
                   <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 via-black/35 to-transparent px-4 pt-12 pb-4 text-white">
-                    <figcaption className="font-medium">{sportName ?? `Sport #${gallery.sport_id}`}</figcaption>
+                    <figcaption className="font-medium">{sportName}</figcaption>
                   </div>
                 </figure>
               ))}
             </div>
           ) : (
-            <Empty className="min-h-64"><EmptyHeader><EmptyMedia variant="icon"><Images /></EmptyMedia><EmptyTitle>No galleries with images found</EmptyTitle><EmptyDescription>{query || selectedSport !== "all" ? "Try another sport tab or search term." : "Create a gallery and upload the first set of sport photos."}</EmptyDescription></EmptyHeader></Empty>
+            <Empty className="min-h-64"><EmptyHeader><EmptyMedia variant="icon"><Images /></EmptyMedia><EmptyTitle>No galleries with images found</EmptyTitle><EmptyDescription>{query || selectedSport !== "all" ? "Try another gallery tab or search term." : "Create a gallery and upload the first set of school-life photos."}</EmptyDescription></EmptyHeader></Empty>
           )}
         </CardContent>
       </Card>
@@ -351,9 +362,9 @@ export function GalleriesManager() {
       <Dialog open={open} onOpenChange={(next) => { if (!saving) setOpen(next); }}>
         <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl">
           <form onSubmit={submit} noValidate>
-            <DialogHeader><DialogTitle>{editingGallery ? "Edit sport gallery" : "Create sport gallery"}</DialogTitle><DialogDescription>{editingGallery ? "Update the gallery details or add more images." : "Add gallery details, then choose images in their display order."}</DialogDescription></DialogHeader>
+            <DialogHeader><DialogTitle>{editingGallery ? "Edit gallery" : "Create gallery"}</DialogTitle><DialogDescription>{editingGallery ? "Update the gallery details or add more images." : "Add gallery details, then choose images in their display order."}</DialogDescription></DialogHeader>
             <FieldGroup className="my-5">
-              <Field data-invalid={Boolean(errors.sport_id)}><FieldLabel htmlFor="gallery-sport">Sport</FieldLabel><NativeSelect id="gallery-sport" value={sportId} onChange={(event) => setSportId(event.target.value)} className="w-full" aria-invalid={Boolean(errors.sport_id)}><NativeSelectOption value="">Select a sport</NativeSelectOption>{sports.map((sport) => <NativeSelectOption key={sport.id} value={sport.id}>{sport.name}{sport.is_active ? "" : " (inactive)"}</NativeSelectOption>)}</NativeSelect><FieldError>{errors.sport_id}</FieldError></Field>
+              <Field data-invalid={Boolean(errors.sport_id)}><FieldLabel htmlFor="gallery-sport">Sport <span className="text-muted-foreground">(optional)</span></FieldLabel><NativeSelect id="gallery-sport" value={sportId} onChange={(event) => setSportId(event.target.value)} className="w-full" aria-invalid={Boolean(errors.sport_id)}><NativeSelectOption value="">Other</NativeSelectOption>{sports.map((sport) => <NativeSelectOption key={sport.id} value={sport.id}>{sport.name}{sport.is_active ? "" : " (inactive)"}</NativeSelectOption>)}</NativeSelect><FieldError>{errors.sport_id}</FieldError></Field>
               <Field data-invalid={Boolean(errors.title)}><FieldLabel htmlFor="gallery-title">Title</FieldLabel><Input id="gallery-title" value={title} onChange={(event) => setTitle(event.target.value)} placeholder="e.g. Inter-school football finals" aria-invalid={Boolean(errors.title)} /><FieldError>{errors.title}</FieldError></Field>
               <Field data-invalid={Boolean(errors.description)}><FieldLabel htmlFor="gallery-description">Description <span className="text-muted-foreground">(optional)</span></FieldLabel><Textarea id="gallery-description" value={description} onChange={(event) => setDescription(event.target.value)} placeholder="Add context about this collection" rows={3} aria-invalid={Boolean(errors.description)} /><FieldError>{errors.description}</FieldError></Field>
               {editingGallery && editingGallery.images.length > 0 && (
@@ -381,7 +392,7 @@ export function GalleriesManager() {
               <Field data-invalid={Boolean(errors.images)}><FieldLabel>{editingGallery ? "Add images (optional)" : "Images"}</FieldLabel><input ref={inputRef} type="file" accept="image/*" multiple className="sr-only" onChange={chooseFiles} /><button type="button" onClick={() => inputRef.current?.click()} className="flex min-h-32 w-full flex-col items-center justify-center rounded-lg border border-dashed bg-muted/30 px-6 text-center transition-colors hover:bg-muted/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"><ImagePlus className="mb-3 size-7 text-muted-foreground" /><span className="font-medium text-sm">Choose images</span><span className="mt-1 text-xs text-muted-foreground">PNG, JPG, WebP or GIF · up to 10 MB each</span></button><FieldError>{errors.images}</FieldError></Field>
               {images.length > 0 && <div className="grid gap-3 sm:grid-cols-2">{images.map((image, index) => <div key={image.id} className="flex gap-3 rounded-lg border p-2"><div className="relative size-20 shrink-0 overflow-hidden rounded-md bg-muted"><Image src={image.preview} alt="" fill sizes="80px" className="object-cover" unoptimized /><Badge className="absolute top-1 left-1" variant="secondary">{index + 1}</Badge></div><div className="min-w-0 flex-1"><div className="flex items-start justify-between gap-2"><p className="truncate text-xs font-medium">{image.file.name}</p><Button type="button" variant="ghost" size="icon-xs" onClick={() => removeImage(image.id)} aria-label={`Remove ${image.file.name}`}><X /></Button></div><Input value={image.altText} onChange={(event) => setImages((current) => current.map((item) => item.id === image.id ? { ...item, altText: event.target.value } : item))} placeholder="Alt text (optional)" className="mt-2 h-7 text-xs" aria-label={`Alt text for ${image.file.name}`} /></div></div>)}</div>}
             </FieldGroup>
-            <DialogFooter><Button type="button" variant="outline" onClick={() => setOpen(false)} disabled={saving}>Cancel</Button><Button type="submit" disabled={saving || sports.length === 0}>{saving ? "Saving..." : editingGallery ? "Save changes" : <><Upload data-icon="inline-start" />Create & upload</>}</Button></DialogFooter>
+            <DialogFooter><Button type="button" variant="outline" onClick={() => setOpen(false)} disabled={saving}>Cancel</Button><Button type="submit" disabled={saving}>{saving ? "Saving..." : editingGallery ? "Save changes" : <><Upload data-icon="inline-start" />Create & upload</>}</Button></DialogFooter>
           </form>
         </DialogContent>
       </Dialog>

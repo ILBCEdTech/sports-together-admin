@@ -15,7 +15,7 @@ const galleryImageSchema = z.object({
 
 const sportGallerySchema = z.object({
   id: z.number().int(),
-  sport_id: z.number().int(),
+  sport_id: z.number().int().nullable(),
   title: z.string(),
   description: z.string().nullable(),
   images: z.array(galleryImageSchema),
@@ -42,7 +42,7 @@ export async function getSchoolLifeGalleries() {
   return galleries
     .map((gallery) => ({
       ...gallery,
-      sportName: sportsById.get(gallery.sport_id) ?? "School sport",
+      sportName: gallery.sport_id === null ? "School Life" : (sportsById.get(gallery.sport_id) ?? "School sport"),
       images: [...gallery.images].sort((left, right) => left.sort_order - right.sort_order),
     }))
     .filter((gallery) => gallery.images.length > 0);
