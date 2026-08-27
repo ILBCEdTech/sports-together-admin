@@ -2,11 +2,21 @@
 
 import { type FormEvent, useEffect, useMemo, useState } from "react";
 
-import { Pencil, Plus, Search, Trophy } from "lucide-react";
+import { Pencil, Plus, Search, Trash2, Trophy } from "lucide-react";
 import { toast } from "sonner";
 import { z } from "zod";
 
 import { Badge } from "@/components/ui/badge";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -65,6 +75,8 @@ export function SportsManager() {
   const [query, setQuery] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingSport, setEditingSport] = useState<SportRecord | null>(null);
+  const [sportToDelete, setSportToDelete] = useState<SportRecord | null>(null);
+  const [deleting, setDeleting] = useState(false);
   const [formValues, setFormValues] = useState<SportFormValues>(emptyForm);
   const [errors, setErrors] = useState<FormErrors>({});
 
@@ -150,6 +162,22 @@ export function SportsManager() {
     }
   }
 
+  async function handleDelete() {
+    if (!sportToDelete) return;
+
+    setDeleting(true);
+    try {
+      await adminApi<unknown>(`sports/${sportToDelete.id}`, { method: "DELETE" });
+      setSports((current) => current.filter((sport) => sport.id !== sportToDelete.id));
+      toast.success(`${sportToDelete.name} deleted`);
+      setSportToDelete(null);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Sport could not be deleted.");
+    } finally {
+      setDeleting(false);
+    }
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
@@ -215,9 +243,7 @@ export function SportsManager() {
                   <TableHead>Code</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Last updated</TableHead>
-                  <TableHead className="pr-4 text-right">
-                    <span className="sr-only">Actions</span>
-                  </TableHead>
+                  <TableHead className="pr-4 text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -242,6 +268,15 @@ export function SportsManager() {
                         aria-label={`Edit ${sport.name}`}
                       >
                         <Pencil />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon-sm"
+                        onClick={() => setSportToDelete(sport)}
+                        aria-label={`Delete ${sport.name}`}
+                        className="text-destructive hover:text-destructive"
+                      >
+                        <Trash2 />
                       </Button>
                     </TableCell>
                   </TableRow>
@@ -328,6 +363,28 @@ export function SportsManager() {
           </form>
         </DialogContent>
       </Dialog>
+
+      <AlertDialog
+        open={Boolean(sportToDelete)}
+        onOpenChange={(open) => {
+          if (!open && !deleting) setSportToDelete(null);
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete {sportToDelete?.name}?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This permanently deletes the sport record. This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleting}>Cancel</AlertDialogCancel>
+            <AlertDialogAction variant="destructive" disabled={deleting} onClick={handleDelete}>
+              {deleting ? "Deleting..." : "Delete sport"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
