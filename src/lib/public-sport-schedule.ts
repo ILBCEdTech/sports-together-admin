@@ -46,6 +46,7 @@ export async function getPublicSportSchedule(sportName: string): Promise<Fixture
       return {
         match: fixture.match_number?.trim() || `Match ${index + 1}`,
         time: `${timeFormatter.format(start)}${end ? `-${timeFormatter.format(end)}` : ""}`,
+        activity: fixture.round ?? undefined,
         division: fixture.round ?? undefined,
         venue: fixture.venue?.name ?? "Event venue",
         home: homeTeam?.name,
