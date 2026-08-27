@@ -28,8 +28,8 @@ export default async function AdminLoginPage() {
           <Link href="/" className="flex items-center gap-3" aria-label="Sports Together home">
             <Image src={logo} alt="" className="size-14 object-contain" priority />
             <div>
-              <p className="font-heading text-lg font-semibold leading-tight text-primary">Sports Together</p>
-              <p className="text-sm text-muted-foreground">Administration</p>
+              <p className="font-heading font-semibold text-lg text-primary leading-tight">Sports Together</p>
+              <p className="text-muted-foreground text-sm">Administration</p>
             </div>
           </Link>
         </div>

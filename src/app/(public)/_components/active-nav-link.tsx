@@ -20,19 +20,23 @@ export function ActiveNavLink({
 
   useEffect(() => {
     const updateHash = () => setHash(window.location.hash);
-    updateHash();
     window.addEventListener("hashchange", updateHash);
     return () => window.removeEventListener("hashchange", updateHash);
+  }, []);
+
+  useEffect(() => {
+    setHash(window.location.hash);
   }, [pathname]);
 
-  const active =
-    label === "Fixtures"
-      ? fixturePaths.includes(pathname)
-      : label === "Results"
-        ? pathname === "/results" || pathname.startsWith("/results/")
-        : label === "Safeguarding"
-          ? pathname === "/" && hash === "#safeguarding"
-          : pathname === href || pathname.startsWith(`${href}/`);
+  let active = pathname === href || pathname.startsWith(`${href}/`);
+
+  if (label === "Fixtures") {
+    active = fixturePaths.includes(pathname);
+  } else if (label === "Results") {
+    active = pathname === "/results" || pathname.startsWith("/results/");
+  } else if (label === "Safeguarding") {
+    active = pathname === "/" && hash === "#safeguarding";
+  }
 
   return (
     <Link

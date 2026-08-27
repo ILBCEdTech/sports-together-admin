@@ -139,7 +139,7 @@ export function SafeguardingPolicies() {
                     aria-hidden="true"
                   />
 
-                  <CardTitle className="font-serif font-bold text-2xl text-sky-950">
+                  <CardTitle className="font-bold font-serif text-2xl text-sky-950">
                     {policy.sport}
                   </CardTitle>
                 </CardHeader>
@@ -227,7 +227,7 @@ export function SafeguardingPolicies() {
                 </div>
 
                 <div>
-                  <h3 className="font-serif font-bold text-xl text-red-950">
+                  <h3 className="font-bold font-serif text-red-950 text-xl">
                     During an Emergency
                   </h3>
 
@@ -251,7 +251,7 @@ export function SafeguardingPolicies() {
                 aria-hidden="true"
               />
 
-              <h3 className="font-serif font-bold text-2xl text-sky-950 sm:text-3xl">
+              <h3 className="font-bold font-serif text-2xl text-sky-950 sm:text-3xl">
                 Available Evacuation Plans
               </h3>
             </div>
@@ -290,7 +290,7 @@ export function SafeguardingPolicies() {
                         {plan.type}
                       </p>
 
-                      <CardTitle className="mt-2 min-h-[3.5rem] font-serif font-bold text-xl text-sky-950 leading-snug sm:text-2xl">
+                      <CardTitle className="mt-2 min-h-[3.5rem] font-bold font-serif text-sky-950 text-xl leading-snug sm:text-2xl">
                         {plan.name}
                       </CardTitle>
                     </CardHeader>
@@ -343,7 +343,7 @@ export function SafeguardingPolicies() {
                   <ShieldCheck className="size-6" aria-hidden="true" />
                 </div>
 
-                <h3 className="mt-5 font-serif font-bold text-3xl">
+                <h3 className="mt-5 font-bold font-serif text-3xl">
                   Emergency Evacuation Guidelines
                 </h3>
 
@@ -383,7 +383,7 @@ export function SafeguardingPolicies() {
               />
 
               <div>
-                <h3 className="font-serif font-bold text-2xl text-sky-950">
+                <h3 className="font-bold font-serif text-2xl text-sky-950">
                   Evacuation Plans
                 </h3>
 

@@ -28,7 +28,7 @@ export function TripDocumentsPage({ audience }: { audience: "Student" | "Teacher
     <main className="min-h-[70vh] bg-slate-100 py-12 sm:py-16">
       <div className="mx-auto max-w-7xl px-5 lg:px-8">
         <p className="font-bold text-sky-700 text-sm uppercase tracking-[0.16em]">{audience} trip documents</p>
-        <h1 className="mt-3 font-serif font-bold text-4xl text-slate-900 tracking-tight sm:text-6xl">
+        <h1 className="mt-3 font-bold font-serif text-4xl text-slate-900 tracking-tight sm:text-6xl">
           Itinerary & Check List
         </h1>
         <p className="mt-4 max-w-2xl text-slate-600 sm:text-lg">
@@ -46,8 +46,8 @@ export function TripDocumentsPage({ audience }: { audience: "Student" | "Teacher
                     <Icon className="size-6" aria-hidden="true" />
                   </div>
                   <div>
-                    <CardTitle className="font-serif font-bold text-2xl text-slate-900">{document.title}</CardTitle>
-                    <CardDescription className="mt-2 leading-6 text-slate-600">{document.description}</CardDescription>
+                    <CardTitle className="font-bold font-serif text-2xl text-slate-900">{document.title}</CardTitle>
+                    <CardDescription className="mt-2 text-slate-600 leading-6">{document.description}</CardDescription>
                   </div>
                 </CardHeader>
                 <CardContent className="grid gap-3 px-6 pb-6">

@@ -73,11 +73,11 @@ export function ThemeBootScript() {
     })();
   `;
 
-  /* biome-ignore lint/security/noDangerouslySetInnerHtml: required for pre-hydration boot script */
   return (
     <script
       type={typeof window === "undefined" ? "text/javascript" : "text/plain"}
       suppressHydrationWarning
+      // biome-ignore lint/security/noDangerouslySetInnerHtml: required for the static pre-hydration boot script
       dangerouslySetInnerHTML={{ __html: code }}
     />
   );

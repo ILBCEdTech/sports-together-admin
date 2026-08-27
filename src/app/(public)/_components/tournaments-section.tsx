@@ -14,6 +14,22 @@ export async function TournamentsSection() {
     failed = true;
   }
 
+  let tournamentContent = <p className="text-slate-600">No tournaments have been published yet.</p>;
+
+  if (failed) {
+    tournamentContent = <p className="text-slate-600">Tournament information is temporarily unavailable.</p>;
+  } else if (tournaments.length > 0) {
+    tournamentContent = (
+      <ul className="list-disc space-y-2 pl-6 text-base text-slate-800 leading-6 sm:text-lg">
+        {tournaments.map((tournament) => (
+          <li key={tournament.id} className="pl-1">
+            {tournament.name}
+          </li>
+        ))}
+      </ul>
+    );
+  }
+
   return (
     <section id="tournaments" aria-labelledby="tournaments-title" className="scroll-mt-20 bg-slate-100">
       <div className="relative isolate h-64 overflow-hidden sm:h-80 lg:h-96">
@@ -28,7 +44,7 @@ export async function TournamentsSection() {
         <div className="relative mx-auto flex h-full max-w-7xl items-start justify-center px-5 pt-10 text-center sm:pt-14 lg:px-8">
           <h2
             id="tournaments-title"
-            className="font-serif font-bold text-4xl text-white uppercase tracking-tight drop-shadow-lg sm:text-6xl"
+            className="font-bold font-serif text-4xl text-white uppercase tracking-tight drop-shadow-lg sm:text-6xl"
           >
             Tournaments
           </h2>
@@ -36,19 +52,7 @@ export async function TournamentsSection() {
       </div>
 
       <div className="mx-auto max-w-7xl px-5 py-16 sm:py-20 lg:px-8 lg:py-24">
-        {failed ? (
-          <p className="text-slate-600">Tournament information is temporarily unavailable.</p>
-        ) : tournaments.length === 0 ? (
-          <p className="text-slate-600">No tournaments have been published yet.</p>
-        ) : (
-          <ul className="list-disc space-y-2 pl-6 text-base text-slate-800 leading-6 sm:text-lg">
-            {tournaments.map((tournament) => (
-              <li key={tournament.id} className="pl-1">
-                {tournament.name}
-              </li>
-            ))}
-          </ul>
-        )}
+        {tournamentContent}
       </div>
     </section>
   );
