@@ -230,12 +230,18 @@ export function ResultsManager() {
       : `${sportName} · Fixture ${fixtureId}${fixture?.round ? ` · ${fixture.round}` : ""}`;
     if (sportName.trim().toLowerCase() !== "badminton") return label;
 
-    const venueName = venues.find((venue) => venue.id === fixture?.venue_id)?.name;
-    const courtNo = venueName?.replace(/^court\s*/i, "").trim() || "—";
     const badmintonFixtures = fixtures.filter((item) => item.sport_id === fixture?.sport_id);
     const fallbackMatchNo = badmintonFixtures.findIndex((item) => item.id === fixtureId) + 1;
     const matchNo =
       fixture?.match_number?.replace(/^match\s*(?:no\.?\s*)?/i, "").trim() || String(fallbackMatchNo);
+    const venueName = venues.find((venue) => venue.id === fixture?.venue_id)?.name;
+    const explicitCourtNo = venueName?.match(/^court\s*(?:no\.?\s*)?(\d+)$/i)?.[1];
+    const simultaneousFixtures = badmintonFixtures
+      .filter((item) => item.start_at === fixture?.start_at)
+      .sort((left, right) => left.id - right.id);
+    const inferredCourtNo = simultaneousFixtures.findIndex((item) => item.id === fixtureId) + 1;
+    const courtNo = explicitCourtNo ?? (inferredCourtNo > 0 ? String(inferredCourtNo) : "—");
+
     return `${label} · Match No. ${matchNo} · Court No. ${courtNo}`;
   }
 
