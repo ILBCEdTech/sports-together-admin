@@ -195,7 +195,14 @@ export function ResultsManager() {
   );
   const filteredResults = results;
   const activeSport = sports.find((sport) => sport.id === Number(activeSportId));
-  const showsSwimmingResults = activeSport?.name.trim().toLowerCase() === "swimming";
+  const swimmingSport = sports.find((sport) => sport.name.trim().toLowerCase() === "swimming");
+  const showsSwimmingResults =
+    activeSport?.id === swimmingSport?.id ||
+    (Boolean(swimmingSport) &&
+      filteredResults.length > 0 &&
+      filteredResults.every(
+        (result) => fixtures.find((fixture) => fixture.id === result.fixture_id)?.sport_id === swimmingSport?.id,
+      ));
   const selectedTeams = fixtureTeams
     .filter((link) => link.fixture_id === form.fixture_id)
     .sort((left, right) => (left.side === "HOME" ? 0 : 1) - (right.side === "HOME" ? 0 : 1));
@@ -398,8 +405,8 @@ export function ResultsManager() {
             <p className="p-6 text-sm text-muted-foreground">Loading results...</p>
           ) : filteredResults.length ? (
             <Table>
-              <TableHeader>
-                <TableRow>
+              <TableHeader className={showsSwimmingResults ? "bg-sky-100" : undefined}>
+                <TableRow className={showsSwimmingResults ? "hover:bg-sky-100" : undefined}>
                   <TableHead className="w-14 pl-4">Sr.</TableHead>
                   {showsSwimmingResults ? (
                     <>
