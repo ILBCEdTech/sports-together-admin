@@ -35,18 +35,12 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { adminApi } from "@/lib/admin-api.client";
 import { type AdminListMeta, type AdminListPayload, normalizeAdminListPayload } from "@/lib/admin-list";
 import type { PlayerRecord, TeamPlayerRecord, TeamRecord } from "@/lib/admin-records";
+import { getTeamColorClass } from "@/lib/team-colors";
 import { AdminFilterBar, AdminListPagination } from "@/components/admin/admin-list-controls";
 import { useAdminListQuery } from "@/hooks/use-admin-list-query";
 
 type SportLookup = { id: number; name: string; code: string; is_active: boolean };
 type TeamForm = { name: string; sport_id: number; player_ids: number[] };
-
-const teamColors = [
-  "bg-[#0070C0] text-white",
-  "bg-[#92D050] text-black",
-  "bg-[#FF0000] text-white",
-  "bg-[#FFFF00] text-black",
-];
 
 const schema = z.object({
   name: z.string().trim().min(2, "Enter a team name.").max(120, "Use 120 characters or fewer."),
@@ -244,7 +238,7 @@ export function TeamsManager() {
                   {filteredTeams.map((team, index) => (
                     <TableHead
                       key={team.id}
-                      className={`min-w-56 border-r p-0 last:border-r-0 ${teamColors[index % 4]}`}
+                      className={`min-w-56 border-r p-0 last:border-r-0 ${getTeamColorClass(team.name)}`}
                     >
                       <div className="flex min-h-14 items-center justify-between gap-2 px-3">
                         <div className="min-w-0">

@@ -15,6 +15,7 @@ import {
   TabsList,
   TabsTrigger,
 } from "@/components/ui/tabs";
+import { getTeamColorClass } from "@/lib/team-colors";
 
 type StudentSport = {
   id: number;
@@ -31,14 +32,6 @@ type StudentSport = {
     }>;
   }>;
 };
-
-const teamHeaderClasses = [
-  "bg-blue-600 text-white",
-  "bg-lime-500 text-slate-950",
-  "bg-red-500 text-white",
-  "bg-yellow-300 text-slate-950",
-  "bg-sky-600 text-white",
-] as const;
 
 export function StudentRosterTabs({
   sports,
@@ -113,11 +106,7 @@ export function StudentRosterTabs({
               >
                 {/* Team Header */}
                 <header
-                  className={`px-3 py-2 ${
-                    teamHeaderClasses[
-                      index % teamHeaderClasses.length
-                    ]
-                  }`}
+                  className={`px-3 py-2 ${getTeamColorClass(team.name)}`}
                 >
                   <div className="text-xs opacity-80">
                     Sr. {index + 1}

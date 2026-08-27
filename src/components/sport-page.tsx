@@ -9,17 +9,7 @@ import { fixtureFallbacks } from "@/lib/fixture-fallback-data";
 import { getPublicSportEventDetails } from "@/lib/public-sport-event-details";
 import { getPublicSportSchedule } from "@/lib/public-sport-schedule";
 import { getPublicSportStaff } from "@/lib/public-sport-staff";
-
-const teamColors: Record<string, string> = {
-  "Team I": "bg-yellow-300 text-slate-950",
-  "Team L": "bg-lime-500 text-slate-950",
-  "Team B": "bg-red-500 text-white",
-  "Team C": "bg-blue-600 text-white",
-};
-
-function teamColor(team: string) {
-  return teamColors[team] ?? "bg-amber-300 text-slate-950";
-}
+import { getTeamColorClass } from "@/lib/team-colors";
 
 function FixturePlayers({ players }: { players?: string[] }) {
   if (!players?.length) return null;
@@ -141,12 +131,12 @@ function EventSchedule({
                     {!teamSchedule && <TableCell className="px-2 text-center">{fixture.activity}</TableCell>}
                     {showLevel && <TableCell className="px-2 text-center">{fixture.division}</TableCell>}
                     {teamSchedule && <>
-                      <TableCell className={`min-w-0 whitespace-normal px-2 py-3 text-center font-semibold ${fixture.home ? teamColor(fixture.home) : "bg-slate-100"}`}>
+                      <TableCell className={`min-w-0 whitespace-normal px-2 py-3 text-center font-semibold ${fixture.home ? getTeamColorClass(fixture.home) : "bg-slate-100"}`}>
                         <span className="block">{fixture.home ?? "—"}</span>
                         {showFixturePlayers && <FixturePlayers players={fixture.homePlayers} />}
                       </TableCell>
                       <TableCell className="bg-slate-100 px-2 text-center text-slate-400">—</TableCell>
-                      <TableCell className={`min-w-0 whitespace-normal px-2 py-3 text-center font-semibold ${fixture.away ? teamColor(fixture.away) : "bg-slate-100"}`}>
+                      <TableCell className={`min-w-0 whitespace-normal px-2 py-3 text-center font-semibold ${fixture.away ? getTeamColorClass(fixture.away) : "bg-slate-100"}`}>
                         <span className="block">{fixture.away ?? "—"}</span>
                         {showFixturePlayers && <FixturePlayers players={fixture.awayPlayers} />}
                       </TableCell>
