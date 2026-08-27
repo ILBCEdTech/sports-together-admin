@@ -92,7 +92,7 @@ export default async function SportResultsPage({ params }: PageProps<"/results/[
                       <>
                         <TableHead className="h-14 px-3 font-black text-slate-950 sm:px-5">Name</TableHead>
                         <TableHead className="h-14 px-3 font-black text-slate-950 sm:px-5">Team</TableHead>
-                        <TableHead className="h-14 px-3 font-black text-slate-950 sm:px-5">Lane</TableHead>
+                        <TableHead className="h-14 px-3 font-black text-slate-950 sm:px-5">Position</TableHead>
                         <TableHead className="h-14 px-3 font-black text-slate-950 sm:px-5">Record</TableHead>
                         <TableHead className="h-14 px-3 font-black text-slate-950 sm:px-5">Point</TableHead>
                         <TableHead className="h-14 px-3 font-black text-slate-950 sm:px-5">Style</TableHead>

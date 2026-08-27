@@ -105,7 +105,7 @@ const schema = z.object({
 const swimmingSchema = z.object({
   name: z.string().trim().min(1, "Enter the swimmer's name."),
   team: z.string().trim().min(1, "Enter the swimmer's team."),
-  lane: z.string().regex(/^\d+$/, "Enter a valid lane number."),
+  lane: z.string().regex(/^\d+$/, "Enter a valid position number."),
   record: z.string().trim().min(1, "Enter the swimmer's record."),
   points: z.string().regex(/^\d+(?:\.\d+)?$/, "Enter zero or a positive number of points."),
   style: z.enum(swimmingStyles, "Choose a swimming style."),
@@ -405,7 +405,7 @@ export function ResultsManager() {
                     <>
                       <TableHead>Name</TableHead>
                       <TableHead>Team</TableHead>
-                      <TableHead>Lane</TableHead>
+                      <TableHead>Position</TableHead>
                       <TableHead>Record</TableHead>
                       <TableHead>Point</TableHead>
                       <TableHead>Style</TableHead>
@@ -599,7 +599,7 @@ export function ResultsManager() {
                   </Field>
                   <NumberField
                     id="swimming-lane"
-                    label="Lane"
+                    label="Position"
                     value={form.lane}
                     error={errors.lane}
                     step={1}
