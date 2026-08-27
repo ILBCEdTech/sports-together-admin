@@ -3,9 +3,10 @@
 import { useEffect, useState } from "react";
 
 import Image from "next/image";
-import { Camera, ChevronLeft, ChevronRight } from "lucide-react";
+import { Camera, ChevronLeft, ChevronRight, Maximize2, X } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogClose, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import { getGalleryImageUrl } from "@/lib/gallery-image-url";
 
 import type { SchoolLifeGallery as SchoolLifeGalleryData } from "../_lib/school-life-data";
@@ -19,6 +20,8 @@ function GalleryCarousel({ gallery }: { gallery: SchoolLifeGalleryData }) {
   );
   const [activeSlide, setActiveSlide] = useState(0);
   const [paused, setPaused] = useState(false);
+  const [maximizedImage, setMaximizedImage] = useState<SchoolLifeGalleryData["images"][number] | null>(null);
+  const [maximizedImageSize, setMaximizedImageSize] = useState({ width: 4, height: 3 });
 
   useEffect(() => {
     if (paused || slides.length < 2 || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
@@ -27,6 +30,15 @@ function GalleryCarousel({ gallery }: { gallery: SchoolLifeGalleryData }) {
     }, autoplayDelay);
     return () => window.clearInterval(timer);
   }, [paused, slides.length]);
+
+  function showAdjacentMaximizedImage(direction: -1 | 1) {
+    if (!maximizedImage) return;
+
+    const currentIndex = gallery.images.findIndex((image) => image.id === maximizedImage.id);
+    const nextIndex = (currentIndex + direction + gallery.images.length) % gallery.images.length;
+    setMaximizedImageSize({ width: 4, height: 3 });
+    setMaximizedImage(gallery.images[nextIndex]);
+  }
 
   return (
     <section aria-labelledby={`gallery-${gallery.id}`}>
@@ -67,9 +79,16 @@ function GalleryCarousel({ gallery }: { gallery: SchoolLifeGalleryData }) {
                 }`}
               >
                 {slide.map((image, imageIndex) => (
-                  <figure
+                  <button
                     key={image.id}
-                    className="group relative h-full min-w-0 overflow-hidden bg-slate-200 shadow-sm"
+                    type="button"
+                    onClick={() => {
+                      setPaused(true);
+                      setMaximizedImageSize({ width: 4, height: 3 });
+                      setMaximizedImage(image);
+                    }}
+                    aria-label={`Maximize ${image.alt_text ?? `${gallery.sportName} photo ${slideIndex * imagesPerSlide + imageIndex + 1}`}`}
+                    className="group relative h-full min-w-0 overflow-hidden bg-slate-200 shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-700 focus-visible:ring-offset-2"
                   >
                     <Image
                       src={getGalleryImageUrl(image)}
@@ -82,10 +101,13 @@ function GalleryCarousel({ gallery }: { gallery: SchoolLifeGalleryData }) {
                       sizes="(max-width: 1280px) 33vw, 400px"
                       className="object-cover transition-transform duration-500 group-hover:scale-105"
                     />
-                    <figcaption className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-slate-950/90 to-transparent px-4 pt-12 pb-4 text-white">
+                    <span className="absolute top-3 right-3 rounded-full bg-slate-950/60 p-2 text-white opacity-0 backdrop-blur-sm transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100">
+                      <Maximize2 className="size-4" aria-hidden="true" />
+                    </span>
+                    <span className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-slate-950/90 to-transparent px-4 pt-12 pb-4 text-left text-white">
                       <span className="font-bold text-xs uppercase tracking-[0.14em]">{gallery.sportName}</span>
-                    </figcaption>
-                  </figure>
+                    </span>
+                  </button>
                 ))}
               </div>
             );
@@ -134,6 +156,83 @@ function GalleryCarousel({ gallery }: { gallery: SchoolLifeGalleryData }) {
           </>
         )}
       </div>
+
+      <Dialog
+        open={Boolean(maximizedImage)}
+        onOpenChange={(open) => {
+          if (!open) setMaximizedImage(null);
+          setPaused(open);
+        }}
+      >
+        <DialogContent
+          showCloseButton={false}
+          className="w-auto max-w-none overflow-visible rounded-none bg-transparent p-0 text-white shadow-none ring-0 sm:max-w-none"
+        >
+          <DialogTitle className="sr-only">{gallery.title}</DialogTitle>
+          <DialogDescription className="sr-only">
+            {maximizedImage?.alt_text ?? `Maximized ${gallery.sportName} gallery photo`}
+          </DialogDescription>
+          {maximizedImage && (
+            <div
+              className="relative"
+              style={{
+                aspectRatio: `${maximizedImageSize.width} / ${maximizedImageSize.height}`,
+                width: `min(calc(100vw - 2rem), ${(90 * maximizedImageSize.width) / maximizedImageSize.height}vh)`,
+              }}
+            >
+              <Image
+                src={getGalleryImageUrl(maximizedImage)}
+                alt={maximizedImage.alt_text ?? `${gallery.sportName}: ${gallery.title}`}
+                fill
+                unoptimized
+                sizes="100vw"
+                className="object-contain"
+                onLoad={(event) => {
+                  setMaximizedImageSize({
+                    width: event.currentTarget.naturalWidth,
+                    height: event.currentTarget.naturalHeight,
+                  });
+                }}
+              />
+              <DialogClose asChild>
+                <Button
+                  type="button"
+                  variant="secondary"
+                  size="icon"
+                  className="absolute top-3 right-3 z-10 rounded-full bg-white text-slate-950 shadow-lg hover:bg-slate-100"
+                  aria-label="Close maximized image"
+                >
+                  <X />
+                </Button>
+              </DialogClose>
+              {gallery.images.length > 1 && (
+                <>
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    size="icon"
+                    onClick={() => showAdjacentMaximizedImage(-1)}
+                    className="absolute top-1/2 left-3 z-10 -translate-y-1/2 rounded-full bg-white/90 text-slate-950 shadow-lg hover:bg-white"
+                    aria-label="Show previous image"
+                  >
+                    <ChevronLeft />
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    size="icon"
+                    onClick={() => showAdjacentMaximizedImage(1)}
+                    className="absolute top-1/2 right-3 z-10 -translate-y-1/2 rounded-full bg-white/90 text-slate-950 shadow-lg hover:bg-white"
+                    aria-label="Show next image"
+                  >
+                    <ChevronRight />
+                  </Button>
+                </>
+              )}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </section>
   );
 }
