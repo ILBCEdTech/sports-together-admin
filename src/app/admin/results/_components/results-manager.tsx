@@ -217,6 +217,7 @@ export function ResultsManager() {
   const selectedFixtureSportName = selectedFixtureSport?.name.trim().toLowerCase();
   const isSwimming = selectedFixtureSportName === "swimming";
   const isFootball = selectedFixtureSportName === "football";
+  const isBasketball = selectedFixtureSportName === "basketball";
 
   function fixtureLabel(fixtureId: number) {
     const fixture = fixtures.find((item) => item.id === fixtureId);
@@ -228,7 +229,11 @@ export function ResultsManager() {
     const label = names.length === 2
       ? `${sportName} · ${names[0]} vs ${names[1]}`
       : `${sportName} · Fixture ${fixtureId}${fixture?.round ? ` · ${fixture.round}` : ""}`;
-    if (sportName.trim().toLowerCase() !== "badminton") return label;
+    const normalizedSportName = sportName.trim().toLowerCase();
+    if (normalizedSportName === "basketball" && fixture?.start_at) {
+      return `${label} · ${fixtureDateTimeFormatter.format(new Date(fixture.start_at))}`;
+    }
+    if (normalizedSportName !== "badminton") return label;
 
     const badmintonFixtures = fixtures.filter((item) => item.sport_id === fixture?.sport_id);
     const fallbackMatchNo = badmintonFixtures.findIndex((item) => item.id === fixtureId) + 1;
@@ -539,7 +544,7 @@ export function ResultsManager() {
                     </NativeSelectOption>
                   ))}
                 </NativeSelect>
-                {isFootball && selectedFixture ? (
+                {(isFootball || isBasketball) && selectedFixture ? (
                   <div className="grid gap-3 rounded-lg border bg-muted/50 p-3 text-sm sm:grid-cols-2">
                     <div>
                       <p className="text-xs text-muted-foreground">Start time</p>
