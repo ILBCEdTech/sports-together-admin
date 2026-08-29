@@ -8,8 +8,10 @@ import {
   Users,
 } from "lucide-react";
 
-import { TournamentsSection } from "./_components/tournaments-section";
+import { HomeGallery } from "./_components/home-gallery";
 import { SafeguardingPolicies } from "./_components/safeguarding-policies";
+import { TournamentsSection } from "./_components/tournaments-section";
+import { getSchoolLifeGalleries } from "./school-life/_lib/school-life-data";
 
 const principles = [
   {
@@ -44,7 +46,9 @@ const historyEditions = [
   },
 ] as const;
 
-export default function HomePage() {
+export default async function HomePage() {
+  const galleries = await getSchoolLifeGalleries().catch(() => []);
+
   return (
     <>
       {/* =========================================================
@@ -103,6 +107,8 @@ export default function HomePage() {
           </div>
         </div>
       </section>
+
+      <HomeGallery galleries={galleries} />
 
       {/* =========================================================
           ABOUT / MISSION
