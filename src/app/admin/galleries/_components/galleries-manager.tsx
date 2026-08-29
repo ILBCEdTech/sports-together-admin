@@ -62,6 +62,7 @@ type PendingImage = { id: string; file: File; preview: string; altText: string }
 
 const maxGalleryImageSizeMb = 20;
 const maxGalleryImageSizeBytes = maxGalleryImageSizeMb * 1024 * 1024;
+const maxImagesPerUpload = 5;
 
 const gallerySchema = z.object({
   sport_id: z.preprocess(
@@ -88,9 +89,11 @@ export function GalleriesManager() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [deletingImage, setDeletingImage] = useState(false);
   const [open, setOpen] = useState(false);
   const [editingGallery, setEditingGallery] = useState<SportGallery | null>(null);
   const [galleryToDelete, setGalleryToDelete] = useState<SportGallery | null>(null);
+  const [imageToDelete, setImageToDelete] = useState<GalleryImage | null>(null);
   const [query, setQuery] = useState("");
   const [selectedSport, setSelectedSport] = useState("all");
   const [sportId, setSportId] = useState("");
@@ -190,29 +193,39 @@ export function GalleriesManager() {
   }
 
   async function uploadImages(galleryId: number, existingImageCount = 0) {
-    const form = new FormData();
-    images.forEach((image) => {
-      form.append("images", image.file);
-    });
-    const response = await fetch(`/api/admin/sport-galleries/${galleryId}/images`, { method: "POST", body: form });
-    const payload = (await response.json().catch(() => null)) as SportGallery | { message?: string } | null;
-    if (!response.ok) {
-      throw new Error(payload && "message" in payload ? payload.message : "The images could not be uploaded.");
+    let uploadedGallery: SportGallery | null = null;
+
+    for (let offset = 0; offset < images.length; offset += maxImagesPerUpload) {
+      const batch = images.slice(offset, offset + maxImagesPerUpload);
+      const imageCountBeforeBatch = existingImageCount + offset;
+      const form = new FormData();
+      batch.forEach((image) => {
+        form.append("images", image.file);
+      });
+
+      const response = await fetch(`/api/admin/sport-galleries/${galleryId}/images`, { method: "POST", body: form });
+      const payload = (await response.json().catch(() => null)) as SportGallery | { message?: string } | null;
+      if (!response.ok) {
+        throw new Error(payload && "message" in payload ? payload.message : "The images could not be uploaded.");
+      }
+
+      const batchGallery = payload as SportGallery;
+      const existingImages = batchGallery.images.slice(0, imageCountBeforeBatch);
+      const updatedNewImages = await Promise.all(
+        batchGallery.images.slice(imageCountBeforeBatch).map((uploadedImage, index) => {
+          const altText = batch[index]?.altText.trim();
+          if (!altText) return uploadedImage;
+          return adminApi<GalleryImage>(`gallery-images/${uploadedImage.id}`, {
+            method: "PATCH",
+            body: JSON.stringify({ alt_text: altText }),
+          });
+        }),
+      );
+      uploadedGallery = { ...batchGallery, images: [...existingImages, ...updatedNewImages] };
     }
 
-    const uploadedGallery = payload as SportGallery;
-    const existingImages = uploadedGallery.images.slice(0, existingImageCount);
-    const updatedNewImages = await Promise.all(
-      uploadedGallery.images.slice(existingImageCount).map((uploadedImage, index) => {
-        const altText = images[index]?.altText.trim();
-        if (!altText) return uploadedImage;
-        return adminApi<GalleryImage>(`gallery-images/${uploadedImage.id}`, {
-          method: "PATCH",
-          body: JSON.stringify({ alt_text: altText }),
-        });
-      }),
-    );
-    return { ...uploadedGallery, images: [...existingImages, ...updatedNewImages] };
+    if (!uploadedGallery) throw new Error("Add at least one image to upload.");
+    return uploadedGallery;
   }
 
   async function submit(event: FormEvent<HTMLFormElement>) {
@@ -271,6 +284,32 @@ export function GalleriesManager() {
       toast.error(error instanceof Error ? error.message : "The gallery could not be deleted.");
     } finally {
       setDeleting(false);
+    }
+  }
+
+  async function deleteGalleryImage() {
+    if (!imageToDelete) return;
+
+    setDeletingImage(true);
+    try {
+      await adminApi<unknown>(`gallery-images/${imageToDelete.id}`, { method: "DELETE" });
+      const removeDeletedImage = (gallery: SportGallery) => ({
+        ...gallery,
+        images: gallery.images.filter((image) => image.id !== imageToDelete.id),
+      });
+
+      setGalleries((current) =>
+        current.map((gallery) => (gallery.id === imageToDelete.gallery_id ? removeDeletedImage(gallery) : gallery)),
+      );
+      setEditingGallery((current) =>
+        current?.id === imageToDelete.gallery_id ? removeDeletedImage(current) : current,
+      );
+      toast.success("Image removed from the gallery");
+      setImageToDelete(null);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "The image could not be removed.");
+    } finally {
+      setDeletingImage(false);
     }
   }
 
@@ -393,12 +432,22 @@ export function GalleriesManager() {
                         <Badge className="absolute top-1 left-1" variant="secondary">
                           {index + 1}
                         </Badge>
+                        <Button
+                          type="button"
+                          variant="destructive"
+                          size="icon-xs"
+                          className="absolute top-1 right-1"
+                          onClick={() => setImageToDelete(image)}
+                          aria-label={`Remove image ${index + 1} from ${editingGallery.title}`}
+                        >
+                          <Trash2 />
+                        </Button>
                       </figure>
                     ))}
                   </div>
                 </Field>
               )}
-              <Field data-invalid={Boolean(errors.images)}><FieldLabel>{editingGallery ? "Add images (optional)" : "Images"}</FieldLabel><input ref={inputRef} type="file" accept="image/*" multiple className="sr-only" onChange={chooseFiles} /><button type="button" onClick={() => inputRef.current?.click()} className="flex min-h-32 w-full flex-col items-center justify-center rounded-lg border border-dashed bg-muted/30 px-6 text-center transition-colors hover:bg-muted/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"><ImagePlus className="mb-3 size-7 text-muted-foreground" /><span className="font-medium text-sm">Choose images</span><span className="mt-1 text-xs text-muted-foreground">PNG, JPG, WebP or GIF · up to {maxGalleryImageSizeMb} MB each</span></button><FieldError>{errors.images}</FieldError></Field>
+              <Field data-invalid={Boolean(errors.images)}><FieldLabel>{editingGallery ? "Add images (optional)" : "Images"}</FieldLabel><input ref={inputRef} type="file" accept="image/*" multiple className="sr-only" onChange={chooseFiles} /><button type="button" onClick={() => inputRef.current?.click()} className="flex min-h-32 w-full flex-col items-center justify-center rounded-lg border border-dashed bg-muted/30 px-6 text-center transition-colors hover:bg-muted/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"><ImagePlus className="mb-3 size-7 text-muted-foreground" /><span className="font-medium text-sm">Choose images</span><span className="mt-1 text-xs text-muted-foreground">Select as many as needed · PNG, JPG, WebP or GIF · up to {maxGalleryImageSizeMb} MB each</span></button><FieldError>{errors.images}</FieldError></Field>
               {images.length > 0 && <div className="grid gap-3 sm:grid-cols-2">{images.map((image, index) => <div key={image.id} className="flex gap-3 rounded-lg border p-2"><div className="relative size-20 shrink-0 overflow-hidden rounded-md bg-muted"><Image src={image.preview} alt="" fill sizes="80px" className="object-cover" unoptimized /><Badge className="absolute top-1 left-1" variant="secondary">{index + 1}</Badge></div><div className="min-w-0 flex-1"><div className="flex items-start justify-between gap-2"><p className="truncate text-xs font-medium">{image.file.name}</p><Button type="button" variant="ghost" size="icon-xs" onClick={() => removeImage(image.id)} aria-label={`Remove ${image.file.name}`}><X /></Button></div><Input value={image.altText} onChange={(event) => setImages((current) => current.map((item) => item.id === image.id ? { ...item, altText: event.target.value } : item))} placeholder="Alt text (optional)" className="mt-2 h-7 text-xs" aria-label={`Alt text for ${image.file.name}`} /></div></div>)}</div>}
             </FieldGroup>
             <DialogFooter><Button type="button" variant="outline" onClick={() => setOpen(false)} disabled={saving}>Cancel</Button><Button type="submit" disabled={saving}>{saving ? "Saving..." : editingGallery ? "Save changes" : <><Upload data-icon="inline-start" />Create & upload</>}</Button></DialogFooter>
@@ -425,6 +474,35 @@ export function GalleriesManager() {
               disabled={deleting}
             >
               {deleting ? "Deleting..." : "Delete gallery"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog
+        open={Boolean(imageToDelete)}
+        onOpenChange={(next) => {
+          if (!next && !deletingImage) setImageToDelete(null);
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Remove this image?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Only this image will be permanently removed. The gallery and its other images will remain unchanged.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deletingImage}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              variant="destructive"
+              onClick={(event) => {
+                event.preventDefault();
+                void deleteGalleryImage();
+              }}
+              disabled={deletingImage}
+            >
+              {deletingImage ? "Removing..." : "Remove image"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
