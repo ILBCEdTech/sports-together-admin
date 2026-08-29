@@ -18,9 +18,12 @@ function getCategories(galleries: SchoolLifeGallery[]): Category[] {
   const categories = new Map<string, SchoolLifeGallery[]>();
 
   for (const gallery of galleries) {
-    const categoryGalleries = categories.get(gallery.sportName) ?? [];
+    if (gallery.images.length === 0) continue;
+
+    const categoryName = gallery.sport_id === null ? "Other" : gallery.sportName;
+    const categoryGalleries = categories.get(categoryName) ?? [];
     categoryGalleries.push(gallery);
-    categories.set(gallery.sportName, categoryGalleries);
+    categories.set(categoryName, categoryGalleries);
   }
 
   return Array.from(categories, ([name, categoryGalleries]) => ({ name, galleries: categoryGalleries }));
@@ -59,15 +62,14 @@ export function HomeGallery({ galleries }: { galleries: SchoolLifeGallery[] }) {
 
         <Tabs defaultValue={categories[0].name} className="mt-10 gap-8">
           <TabsList
-            variant="line"
             aria-label="Gallery categories"
-            className="h-auto max-w-full justify-start gap-5 overflow-x-auto pb-2"
+            className="flex h-auto w-full justify-start gap-px overflow-x-auto rounded-none bg-slate-200 p-0"
           >
             {categories.map((category) => (
               <TabsTrigger
                 key={category.name}
                 value={category.name}
-                className="h-10 flex-none px-0 font-bold text-xs uppercase tracking-[0.14em]"
+                className="h-20 min-w-40 flex-1 rounded-none border-0 bg-white px-4 font-bold text-base text-sky-950 shadow-none hover:bg-slate-50 data-active:bg-sky-950 data-active:text-white data-active:shadow-none"
               >
                 {category.name}
               </TabsTrigger>
