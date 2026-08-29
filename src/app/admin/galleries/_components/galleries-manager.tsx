@@ -60,6 +60,9 @@ type SportGallery = {
 };
 type PendingImage = { id: string; file: File; preview: string; altText: string };
 
+const maxGalleryImageSizeMb = 20;
+const maxGalleryImageSizeBytes = maxGalleryImageSizeMb * 1024 * 1024;
+
 const gallerySchema = z.object({
   sport_id: z.preprocess(
     (value) => (value === "" ? null : value),
@@ -161,8 +164,10 @@ export function GalleriesManager() {
 
   function chooseFiles(event: ChangeEvent<HTMLInputElement>) {
     const selected = Array.from(event.target.files ?? []);
-    const valid = selected.filter((file) => file.type.startsWith("image/") && file.size <= 10 * 1024 * 1024);
-    if (valid.length !== selected.length) toast.error("Choose image files up to 10 MB each.");
+    const valid = selected.filter((file) => file.type.startsWith("image/") && file.size <= maxGalleryImageSizeBytes);
+    if (valid.length !== selected.length) {
+      toast.error(`Choose image files up to ${maxGalleryImageSizeMb} MB each.`);
+    }
     setImages((current) => [
       ...current,
       ...valid.map((file) => ({
@@ -393,7 +398,7 @@ export function GalleriesManager() {
                   </div>
                 </Field>
               )}
-              <Field data-invalid={Boolean(errors.images)}><FieldLabel>{editingGallery ? "Add images (optional)" : "Images"}</FieldLabel><input ref={inputRef} type="file" accept="image/*" multiple className="sr-only" onChange={chooseFiles} /><button type="button" onClick={() => inputRef.current?.click()} className="flex min-h-32 w-full flex-col items-center justify-center rounded-lg border border-dashed bg-muted/30 px-6 text-center transition-colors hover:bg-muted/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"><ImagePlus className="mb-3 size-7 text-muted-foreground" /><span className="font-medium text-sm">Choose images</span><span className="mt-1 text-xs text-muted-foreground">PNG, JPG, WebP or GIF · up to 10 MB each</span></button><FieldError>{errors.images}</FieldError></Field>
+              <Field data-invalid={Boolean(errors.images)}><FieldLabel>{editingGallery ? "Add images (optional)" : "Images"}</FieldLabel><input ref={inputRef} type="file" accept="image/*" multiple className="sr-only" onChange={chooseFiles} /><button type="button" onClick={() => inputRef.current?.click()} className="flex min-h-32 w-full flex-col items-center justify-center rounded-lg border border-dashed bg-muted/30 px-6 text-center transition-colors hover:bg-muted/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"><ImagePlus className="mb-3 size-7 text-muted-foreground" /><span className="font-medium text-sm">Choose images</span><span className="mt-1 text-xs text-muted-foreground">PNG, JPG, WebP or GIF · up to {maxGalleryImageSizeMb} MB each</span></button><FieldError>{errors.images}</FieldError></Field>
               {images.length > 0 && <div className="grid gap-3 sm:grid-cols-2">{images.map((image, index) => <div key={image.id} className="flex gap-3 rounded-lg border p-2"><div className="relative size-20 shrink-0 overflow-hidden rounded-md bg-muted"><Image src={image.preview} alt="" fill sizes="80px" className="object-cover" unoptimized /><Badge className="absolute top-1 left-1" variant="secondary">{index + 1}</Badge></div><div className="min-w-0 flex-1"><div className="flex items-start justify-between gap-2"><p className="truncate text-xs font-medium">{image.file.name}</p><Button type="button" variant="ghost" size="icon-xs" onClick={() => removeImage(image.id)} aria-label={`Remove ${image.file.name}`}><X /></Button></div><Input value={image.altText} onChange={(event) => setImages((current) => current.map((item) => item.id === image.id ? { ...item, altText: event.target.value } : item))} placeholder="Alt text (optional)" className="mt-2 h-7 text-xs" aria-label={`Alt text for ${image.file.name}`} /></div></div>)}</div>}
             </FieldGroup>
             <DialogFooter><Button type="button" variant="outline" onClick={() => setOpen(false)} disabled={saving}>Cancel</Button><Button type="submit" disabled={saving}>{saving ? "Saving..." : editingGallery ? "Save changes" : <><Upload data-icon="inline-start" />Create & upload</>}</Button></DialogFooter>
