@@ -729,7 +729,7 @@ export function ResultsManager() {
                         setForm({ ...form, winner_team_id: event.target.value ? Number(event.target.value) : null })
                       }
                     >
-                      <NativeSelectOption value="">Not declared / draw</NativeSelectOption>
+                      <NativeSelectOption value="">{isFootball ? "Draw" : "Not declared"}</NativeSelectOption>
                       {selectedTeams.map((link) => (
                         <NativeSelectOption key={link.team_id} value={link.team_id}>
                           {teams.find((team) => team.id === link.team_id)?.name ?? `Team ${link.team_id}`}
