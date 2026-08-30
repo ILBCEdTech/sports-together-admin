@@ -63,7 +63,7 @@ export function HomeGallery({ galleries }: { galleries: SchoolLifeGallery[] }) {
         <Tabs defaultValue={categories[0].name} className="mt-10 gap-8">
           <TabsList
             aria-label="Gallery categories"
-            className="flex h-auto w-full justify-start gap-px overflow-x-auto rounded-none bg-slate-200 p-0"
+            className="flex h-auto w-full justify-start gap-px overflow-x-auto rounded-none bg-slate-200 p-0 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
           >
             {categories.map((category) => (
               <TabsTrigger
