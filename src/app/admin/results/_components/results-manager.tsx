@@ -221,6 +221,22 @@ export function ResultsManager() {
   const isSwimming = selectedFixtureSportName === "swimming";
   const isFootball = selectedFixtureSportName === "football";
   const isBasketball = selectedFixtureSportName === "basketball";
+
+  function resultWinnerLabel(result: ResultRecord) {
+    const winner = teams.find((team) => team.id === result.winner_team_id)?.name;
+    if (winner) return winner;
+
+    const fixture = fixtures.find((item) => item.id === result.fixture_id);
+    const fixtureSport = sports.find((sport) => sport.id === fixture?.sport_id);
+    const isFootballResult = fixtureSport?.name.trim().toLowerCase() === "football";
+    const isDraw =
+      isFootballResult &&
+      result.team_a_score !== null &&
+      result.team_a_score === result.team_b_score;
+
+    return isDraw ? "Draw" : "Not declared";
+  }
+
   function fixtureLabel(fixtureId: number) {
     const fixture = fixtures.find((item) => item.id === fixtureId);
     const sportName = sports.find((sport) => sport.id === fixture?.sport_id)?.name ?? "Unknown sport";
@@ -462,9 +478,7 @@ export function ResultsManager() {
                         <TableCell>
                           {result.team_a_score ?? "—"} – {result.team_b_score ?? "—"}
                         </TableCell>
-                        <TableCell>
-                          {teams.find((team) => team.id === result.winner_team_id)?.name ?? "Not declared"}
-                        </TableCell>
+                        <TableCell>{resultWinnerLabel(result)}</TableCell>
                         <TableCell>
                           <Badge variant={result.status === "FINAL" ? "default" : "outline"}>
                             {resultStatusLabel(result.status)}

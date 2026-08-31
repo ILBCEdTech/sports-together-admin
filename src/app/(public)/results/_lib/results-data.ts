@@ -97,6 +97,7 @@ export async function getSportResults(requestedSportId?: number) {
     sports[0];
   if (!sport) return { sportId: null, sportName: "Basketball", results: [] as PublicResult[] };
 
+  const isFootball = sport.name.trim().toLowerCase() === "football";
   const teamsById = new Map(teams.map((team) => [team.id, team]));
   const sportFixtures = fixtures.filter((fixture) => fixture.sport_id === sport.id);
   const fixturesById = new Map(sportFixtures.map((fixture) => [fixture.id, fixture]));
@@ -123,7 +124,13 @@ export async function getSportResults(requestedSportId?: number) {
         awayTeam: teamB ? (teamsById.get(teamB.team_id)?.name ?? "Unknown team") : "Unknown team",
         homeScore: result.team_a_score,
         awayScore: result.team_b_score,
-        winner: result.winner_team_id ? (teamsById.get(result.winner_team_id)?.name ?? null) : null,
+        winner: result.winner_team_id
+          ? (teamsById.get(result.winner_team_id)?.name ?? null)
+          : isFootball &&
+              result.team_a_score !== null &&
+              result.team_a_score === result.team_b_score
+            ? "Draw"
+            : null,
         status: result.status,
         remark: result.remark,
         name: optionalText(result.name),
